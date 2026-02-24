@@ -1,0 +1,153 @@
+---
+export interface Props {
+    city: string;
+    country: string;
+    category: string;
+}
+
+const { city, country, category } = Astro.props;
+const submitUrl = 'https://gopremium.app/create-listing';
+---
+
+<section class="owner-cta">
+    <div class="container">
+        <div class="cta-content">
+            <div class="cta-icon">🏢</div>
+            <h2>Own a {category} Venue in {city}?</h2>
+            <p class="cta-subtitle">Get featured in our directory and reach new clients through organic search!</p>
+            
+            <div class="benefits">
+                <div class="benefit">
+                    <span class="benefit-icon">📈</span>
+                    <span>Increase your visibility</span>
+                </div>
+                <div class="benefit">
+                    <span class="benefit-icon">🎯</span>
+                    <span>Targeted local traffic</span>
+                </div>
+                <div class="benefit">
+                    <span class="benefit-icon">⭐</span>
+                    <span>Silver & Gold options</span>
+                </div>
+                <div class="benefit">
+                    <span class="benefit-icon">📱</span>
+                    <span>Mobile-optimized listing</span>
+                </div>
+            </div>
+            
+            <div class="cta-buttons">
+                <a href={submitUrl} rel="nofollow" class="btn-cta-primary" title="Create your venue listing">
+                    Add Your Venue for FREE →
+                </a>
+                <a href="https://erotikmaps.com/erotic-massage" class="btn-cta-secondary" title="Browse all erotic massage venues">
+                    Browse All Listings
+                </a>
+            </div>
+            
+            <p class="cta-note">
+                Join <strong>thousands of listings</strong> already on 
+                <a href="https://erotikmaps.com" title="ErotikMaps adult directory">ErotikMaps</a>. 
+                Basic listings are <strong>completely free</strong>. Browse our 
+                <a href="https://erotikmaps.com/gentlemens-club" title="Gentlemen's clubs worldwide">gentlemen's clubs</a>,
+                <a href="https://erotikmaps.com/swinger-club" title="Swinger clubs">swinger clubs</a>, and
+                <a href="https://erotikmaps.com/gfe" title="GFE Girlfriend Experience">GFE escorts</a> sections too!
+            </p>
+        </div>
+    </div>
+</section>
+
+<style>
+    .owner-cta {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        padding: 60px 0;
+        color: white;
+        text-align: center;
+    }
+    .cta-content {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .cta-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    .owner-cta h2 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .cta-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+    .benefits {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .benefit {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.15);
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+    }
+    .benefit-icon {
+        font-size: 1.2rem;
+    }
+    .cta-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+    .btn-cta-primary {
+        background: white;
+        color: var(--primary);
+        padding: 15px 35px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .btn-cta-secondary {
+        background: transparent;
+        color: white;
+        padding: 15px 35px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 2px solid white;
+        text-decoration: none;
+    }
+    .btn-cta-secondary:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    .cta-note {
+        font-size: 13px;
+        opacity: 0.85;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .cta-note a {
+        color: white;
+        text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+        .owner-cta h2 {
+            font-size: 1.5rem;
+        }
+        .cta-buttons {
+            flex-direction: column;
+        }
+    }
+</style>

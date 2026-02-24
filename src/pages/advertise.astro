@@ -1,0 +1,571 @@
+---
+import Base from '../layouts/Base.astro';
+
+const canonicalUrl = 'https://nurumassageistanbul.top/advertise';
+
+// Fetch listing count for honest stats
+let venueCount = 0;
+try {
+    const res = await fetch('https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=erotic-massage&limit=1');
+    if (res.ok) {
+        const d = await res.json();
+        venueCount = d.pagination?.total || (d.data ? d.data.length : 0);
+    }
+} catch (e) {}
+---
+
+<Base 
+    title="Advertise Your Nuru Massage Venue in Istanbul | Get More Clients"
+    description="Promote your Nuru Massage in Istanbul. Reach potential clients through organic search. Free listing available. Silver and Gold options for maximum visibility."
+    canonical={canonicalUrl}
+>
+    <div class="b2b-page">
+        <section class="b2b-hero">
+            <div class="container">
+                <span class="hero-badge">🚀 For Business Owners</span>
+                <h1>Grow Your Nuru Massage Business in Istanbul</h1>
+                <p class="hero-subtitle">List your Nuru Massage venue in Istanbul's growing directory and reach clients through organic search</p>
+                <div class="hero-ctas">
+                    <a href="https://gopremium.app/create-listing" class="btn-primary-large">
+                        ✨ Create Free Listing
+                    </a>
+                    <a href="#pricing" class="btn-secondary-large">
+                        View Plans & Pricing
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-stats">
+            <div class="container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">{venueCount > 0 ? venueCount + '+' : 'New'}</span>
+                        <span class="stat-label">Venues Listed in Istanbul</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">Free</span>
+                        <span class="stat-label">Basic Listing</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">24/7</span>
+                        <span class="stat-label">Online Visibility</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">0%</span>
+                        <span class="stat-label">Commission on Bookings</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-benefits">
+            <div class="container">
+                <h2>Why List Your Venue With Us?</h2>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🎯</span>
+                        <h3>Targeted Traffic</h3>
+                        <p>Our visitors are searching for Nuru Massage services in Istanbul — relevant, high-intent organic traffic.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📱</span>
+                        <h3>Mobile Optimized</h3>
+                        <p>Our site is fully responsive. Your listing looks perfect on phones, tablets, and desktops.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">🔍</span>
+                        <h3>SEO Boost</h3>
+                        <p>This directory is built with SEO best practices. As it grows in authority, your listing gains organic visibility for "Nuru Massage Istanbul" searches.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📞</span>
+                        <h3>Direct Contact</h3>
+                        <p>Clients can call, WhatsApp, or email you directly. No middleman, no commission on bookings.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">📸</span>
+                        <h3>Photo Gallery</h3>
+                        <p>Showcase your venue with up to 20 photos and videos. First impressions matter.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <span class="benefit-icon">⭐</span>
+                        <h3>Priority Placement</h3>
+                        <p>Gold and Silver members appear first in search results and get a special badge. Stand out from competitors.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-pricing" id="pricing">
+            <div class="container">
+                <h2>Simple, Transparent Pricing</h2>
+                <p class="pricing-subtitle">Choose the plan that fits your business needs</p>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <div class="pricing-header">
+                            <h3>Free</h3>
+                            <p class="price"><span class="currency">€</span>0<span class="period">/month</span></p>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>✓ Basic listing</li>
+                            <li>✓ Up to 5 photos</li>
+                            <li>✓ Contact information</li>
+                            <li>✓ Location on map</li>
+                            <li class="disabled">✗ Featured placement</li>
+                            <li class="disabled">✗ Gold badge</li>
+                        </ul>
+                        <a href="https://gopremium.app/create-listing" class="pricing-cta">Get Started Free</a>
+                    </div>
+                    <div class="pricing-card featured">
+                        <div class="popular-badge">Most Popular</div>
+                        <div class="pricing-header">
+                            <h3>Silver</h3>
+                            <p class="price"><span class="currency">€</span>29<span class="period">/month</span></p>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>✓ Everything in Free</li>
+                            <li>✓ Up to 15 photos</li>
+                            <li>✓ Priority in search</li>
+                            <li>✓ Silver badge</li>
+                            <li>✓ Detailed analytics</li>
+                            <li class="disabled">✗ Gold badge</li>
+                        </ul>
+                        <a href="https://gopremium.app/create-listing" class="pricing-cta featured">Go Silver</a>
+                    </div>
+                    <div class="pricing-card gold">
+                        <div class="gold-badge">⭐ Best Value</div>
+                        <div class="pricing-header">
+                            <h3>Gold</h3>
+                            <p class="price"><span class="currency">€</span>79<span class="period">/month</span></p>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>✓ Everything in Silver</li>
+                            <li>✓ Unlimited photos & videos</li>
+                            <li>✓ #1 placement in city</li>
+                            <li>✓ Exclusive Gold badge</li>
+                            <li>✓ Featured on homepage</li>
+                            <li>✓ Priority support</li>
+                        </ul>
+                        <a href="https://gopremium.app/create-listing" class="pricing-cta gold">Go Gold ⭐</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-why-us">
+            <div class="container">
+                <h2>Why Venue Owners Choose Our Directory</h2>
+                <div class="why-grid">
+                    <div class="why-card">
+                        <span class="why-icon">🌍</span>
+                        <h3>Part of the ErotikMaps Network</h3>
+                        <p>Your listing benefits from the authority and traffic of the ErotikMaps international network — spanning hundreds of cities across multiple continents.</p>
+                    </div>
+                    <div class="why-card">
+                        <span class="why-icon">🚫</span>
+                        <h3>No Censorship</h3>
+                        <p>Unlike Google My Business and social media platforms that frequently censor or ban adult businesses, our directory is built specifically for your industry.</p>
+                    </div>
+                    <div class="why-card">
+                        <span class="why-icon">💰</span>
+                        <h3>No Commission</h3>
+                        <p>We never take a percentage of your bookings. Clients contact you directly and every euro they spend goes to you.</p>
+                    </div>
+                    <div class="why-card">
+                        <span class="why-icon">📈</span>
+                        <h3>Growing Traffic</h3>
+                        <p>We invest in SEO so you don't have to. As our Istanbul directory grows in search rankings, your listing gets more exposure automatically.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-faq">
+            <div class="container">
+                <h2>Frequently Asked Questions</h2>
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <h3>How do I create a listing?</h3>
+                        <p>Click "Create Free Listing" button, fill in your venue details, upload photos, and submit. Approval usually takes less than 24 hours.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h3>Can I upgrade or downgrade my plan?</h3>
+                        <p>Yes, you can change your plan at any time. Upgrades are instant, downgrades take effect at the end of your billing cycle.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h3>Do you take commission on bookings?</h3>
+                        <p>No, we never take commission. Clients contact you directly and you keep 100% of your earnings.</p>
+                    </div>
+                    <div class="faq-item">
+                        <h3>How long until my listing appears?</h3>
+                        <p>Free listings are approved within 24-48 hours. Silver and Gold listings are prioritized and usually live within a few hours.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="b2b-cta-final">
+            <div class="container">
+                <h2>Ready to Grow Your Business?</h2>
+                <p>Join hundreds of successful Nuru Massage venues in Istanbul</p>
+                <a href="https://gopremium.app/create-listing" class="btn-primary-large">
+                    🚀 Create Your Listing Now
+                </a>
+                <p class="cta-note">Free to start • No credit card required • Cancel anytime</p>
+            </div>
+        </section>
+    </div>
+</Base>
+
+<style>
+    .b2b-page {
+        --gold: #D4AF37;
+    }
+    
+    .b2b-hero {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 80px 0;
+        text-align: center;
+    }
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .b2b-hero h1 {
+        font-size: clamp(1.8rem, 5vw, 3rem);
+        margin-bottom: 16px;
+    }
+    .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .hero-ctas {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .btn-primary-large, .btn-secondary-large {
+        padding: 16px 32px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-primary-large {
+        background: white;
+        color: var(--primary);
+    }
+    .btn-primary-large:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .btn-secondary-large {
+        background: transparent;
+        border: 2px solid white;
+        color: white;
+    }
+    .btn-secondary-large:hover {
+        background: white;
+        color: var(--primary);
+    }
+    
+    .b2b-stats {
+        padding: 60px 0;
+        background: var(--card-bg);
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 30px;
+        text-align: center;
+    }
+    .stat-card {
+        padding: 20px;
+    }
+    .stat-number {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+    .stat-label {
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    
+    .b2b-benefits {
+        padding: 80px 0;
+    }
+    .b2b-benefits h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 50px;
+    }
+    .benefits-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+    }
+    .benefit-card {
+        background: var(--card-bg);
+        padding: 30px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
+    }
+    .benefit-card:hover {
+        transform: translateY(-5px);
+    }
+    .benefit-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 16px;
+    }
+    .benefit-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    .benefit-card p {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .b2b-pricing {
+        padding: 80px 0;
+        background: linear-gradient(180deg, #f8f9fa 0%, white 100%);
+    }
+    .b2b-pricing h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .pricing-subtitle {
+        text-align: center;
+        color: var(--text-light);
+        margin-bottom: 50px;
+    }
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .pricing-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.08);
+        position: relative;
+        transition: transform 0.3s ease;
+    }
+    .pricing-card:hover {
+        transform: translateY(-5px);
+    }
+    .pricing-card.featured {
+        border: 3px solid var(--primary);
+    }
+    .pricing-card.gold {
+        border: 3px solid var(--gold);
+        background: linear-gradient(180deg, #fffef5 0%, white 100%);
+    }
+    .popular-badge, .gold-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 6px 20px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .popular-badge {
+        background: var(--primary);
+        color: white;
+    }
+    .gold-badge {
+        background: var(--gold);
+        color: white;
+    }
+    .pricing-header h3 {
+        font-size: 1.4rem;
+        margin-bottom: 10px;
+    }
+    .price {
+        font-size: 2.5rem;
+        font-weight: 800;
+    }
+    .currency {
+        font-size: 1.2rem;
+        vertical-align: super;
+    }
+    .period {
+        font-size: 1rem;
+        color: var(--text-light);
+        font-weight: 400;
+    }
+    .pricing-features {
+        list-style: none;
+        padding: 0;
+        margin: 30px 0;
+    }
+    .pricing-features li {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95rem;
+    }
+    .pricing-features li.disabled {
+        color: #ccc;
+    }
+    .pricing-cta {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        text-align: center;
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .pricing-cta:hover {
+        background: var(--primary);
+        color: white;
+    }
+    .pricing-cta.featured {
+        background: var(--primary);
+        color: white;
+    }
+    .pricing-cta.featured:hover {
+        background: var(--secondary);
+    }
+    .pricing-cta.gold {
+        background: var(--gold);
+        color: white;
+    }
+    .pricing-cta.gold:hover {
+        background: #c5a028;
+    }
+    
+    .b2b-why-us {
+        padding: 80px 0;
+    }
+    .b2b-why-us h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 50px;
+    }
+    .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+    }
+    .why-card {
+        background: var(--card-bg);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .why-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    .why-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 16px;
+    }
+    .why-card h3 {
+        font-size: 1.15rem;
+        margin-bottom: 12px;
+        color: var(--text);
+    }
+    .why-card p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: var(--text-light);
+    }
+    .author-name {
+        font-weight: 600;
+        display: block;
+    }
+    .author-location {
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    
+    .b2b-faq {
+        padding: 80px 0;
+        background: var(--card-bg);
+    }
+    .b2b-faq h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 50px;
+    }
+    .b2b-faq .faq-list {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .b2b-faq .faq-item {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+    .b2b-faq .faq-item h3 {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+    }
+    .b2b-faq .faq-item p {
+        color: var(--text-light);
+        line-height: 1.6;
+    }
+    
+    .b2b-cta-final {
+        padding: 100px 0;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        text-align: center;
+    }
+    .b2b-cta-final h2 {
+        font-size: 2rem;
+        margin-bottom: 16px;
+    }
+    .b2b-cta-final p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+    .b2b-cta-final .btn-primary-large {
+        font-size: 1.1rem;
+    }
+    .cta-note {
+        font-size: 14px;
+        opacity: 0.8;
+        margin-top: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .b2b-hero { padding: 50px 0; }
+        .b2b-benefits, .b2b-pricing, .b2b-why-us, .b2b-faq { padding: 50px 0; }
+        .pricing-grid { grid-template-columns: 1fr; }
+    }
+</style>

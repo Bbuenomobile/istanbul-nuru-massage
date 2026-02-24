@@ -1,0 +1,848 @@
+---
+import Base from '../layouts/Base.astro';
+import ListingCard from '../components/ListingCard.astro';
+import InternalLinks from '../components/InternalLinks.astro';
+import OwnerCTA from '../components/OwnerCTA.astro';
+import CategoryNav from '../components/CategoryNav.astro';
+import NetworkLinks from '../components/NetworkLinks.astro';
+import GeoBanner from '../components/GeoBanner.astro';
+
+// Safe fetch helper for build-time API calls
+async function safeFetchJson(url: string): Promise<any[]> {
+    try {
+        console.log('Fetching:', url);
+        const res = await fetch(url, {
+            headers: { 
+                'Accept': 'application/json',
+                'User-Agent': 'ErotikMaps-Satellite-Builder/1.0',
+                'X-Satellite-Build': 'true'
+            }
+        });
+        
+        if (!res.ok) {
+            console.error('API returned ' + res.status + ': ' + res.statusText);
+            return [];
+        }
+        
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) {
+            console.error('Expected JSON but got: ' + ct);
+            return [];
+        }
+        
+        const data = await res.json();
+        return data.data || [];
+    } catch (error) {
+        console.error('Fetch failed:', error);
+        return [];
+    }
+}
+
+// Fetch listings from API at build time - with country fallback
+const cityApiUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=erotic-massage&limit=100';
+let listings = await safeFetchJson(cityApiUrl);
+let isCountryFallback = false;
+let fallbackLocation = 'Istanbul';
+
+// If no listings in city, fallback to country (Gold + premium + 20 others max)
+if (listings.length === 0) {
+    const countryApiUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?country=turkey&category=erotic-massage&limit=200';
+    const allCountryListings = await safeFetchJson(countryApiUrl);
+    
+    if (allCountryListings.length > 0) {
+        // Keep ALL gold and premium listings
+        const goldOnes = allCountryListings.filter((l: any) => l.is_gold);
+        const premiumOnes = allCountryListings.filter((l: any) => l.is_premium && !l.is_gold);
+        // Non-premium: sort by ID (deterministic) and take max 20
+        const others = allCountryListings.filter((l: any) => !l.is_premium && !l.is_gold);
+        const selected = others.sort((a: any, b: any) => (a.id || 0) - (b.id || 0)).slice(0, 20);
+        // Merge: gold first, then premium, then selection
+        listings = [...goldOnes, ...premiumOnes, ...selected];
+    }
+    
+    isCountryFallback = true;
+    fallbackLocation = 'Turkey';
+}
+
+// Related categories mapping for cross-promotion
+const relatedCategories: Record<string, { slug: string; label: string; icon: string }[]> = {
+    'erotic-massage': [
+        { slug: 'gentlemens-club', label: "Gentlemen's Clubs", icon: '🥂' },
+        { slug: 'swinger-club', label: 'Swinger Clubs', icon: '💑' }
+    ],
+    'gentlemens-club': [
+        { slug: 'erotic-massage', label: 'Erotic Massage', icon: '💆' },
+        { slug: 'swinger-club', label: 'Swinger Clubs', icon: '💑' }
+    ],
+    'swinger-club': [
+        { slug: 'erotic-massage', label: 'Erotic Massage', icon: '💆' },
+        { slug: 'gentlemens-club', label: "Gentlemen's Clubs", icon: '🥂' }
+    ]
+};
+
+// Fetch related category listings - with country fallback
+const currentCategory = 'erotic-massage';
+const related = relatedCategories[currentCategory] || [];
+const relatedListings: { category: string; label: string; icon: string; listings: any[]; isCountry: boolean }[] = [];
+
+for (const rel of related) {
+    // Try city first
+    let relUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=' + rel.slug + '&limit=6';
+    let relData = await safeFetchJson(relUrl);
+    let isRelCountry = false;
+    
+    // Fallback to country if no city listings
+    if (relData.length === 0) {
+        relUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?country=turkey&category=' + rel.slug + '&limit=6';
+        relData = await safeFetchJson(relUrl);
+        isRelCountry = true;
+    }
+    
+    if (relData.length > 0) {
+        relatedListings.push({
+            category: rel.slug,
+            label: rel.label,
+            icon: rel.icon,
+            listings: relData.slice(0, 6),
+            isCountry: isRelCountry
+        });
+    }
+}
+
+const faq = [{"question":"How do I choose a reputable place in Istanbul?","answer":"To find a reliable spot for Nuru Massage in Istanbul, look for listings with Gold verification badges in our directory which indicate trusted establishments. Check their photos and read contact information carefully before booking an appointment. Reading online reviews can also provide insights into the experiences of previous customers which helps ensure you select a quality salon."},{"question":"How much does a session cost in Istanbul?","answer":"'Contact venues for current pricing.' Rates vary depending on session type and duration offered at different locations across the city. Generally expect lower prices during weekdays compared to weekends where demand increases significantly."},{"question":"Can I pay by card or do I need cash in Istanbul?","answer":"In Turkey, using cash is often preferred at massage establishments including those offering Nuru Massage services but many places do accept card payments as well now. It's recommended to carry some Turkish Lira (TRY) since not all venues will take cards; always confirm payment methods upon arrival."},{"question":"What does a typical session look like in Istanbul?","answer":"'A typical Nuru Massage session lasts between 60-90 minutes.' Upon arrival at the salon, you usually have a brief consultation about your preferences followed by the actual massage itself which focuses on relaxation techniques using warm gel made from seaweed."},{"question":"Is English spoken at venues in Istanbul?","answer":"'English language skills among staff can vary.' While many employees may know basic English phrases, having translation apps ready can help bridge any communication gaps you might encounter during your visit."},{"question":"What are the operating hours for venues in Istanbul?","answer":"'Hours vary from one establishment to another.' Typically most places offering Nuru Massage open around 10 AM and remain operational until midnight; however checking individual listings ensures accurate timing especially on weekends when hours might extend later."}];
+const canonicalUrl = 'https://nurumassageistanbul.top/';
+
+// HTML content from AI (stored as variables for set:html)
+const introHtml = `<p>Istanbul is a city that intertwines history and modernity, where ancient mosques stand alongside contemporary architecture. The Bosphorus glistens under the sun, while the aroma of spices fills the air in local markets. Walking through Taksim Square, you can feel the vibrant energy of this metropolis, a perfect backdrop for relaxation and rejuvenation.</p><h2>The Nuru Massage Scene in Istanbul</h2><p>Nuru Massage has gained popularity in Istanbul as both a mainstream and discreet service. Our directory lists three gold-verified establishments that specialize in this unique experience: <strong>ISTANBUL EROTIC MASSAGE - MOONLIGHT TOUCH</strong>, Pearl Touch : Erotic Massage Istanbul, and Respira Massage. Located primarily around Place Taksim, these venues cater to those seeking an intimate and sensual massage experience.</p><p>The services offered at these parlors focus on the unique techniques of Nuru Massage, which involve the use of a special gel made from seaweed. This gel enhances the slide and glide of the session, allowing for deep relaxation and connection. Local culture influences these practices as clients often seek not just physical relief but also emotional comfort.</p><h2>How to Book and What to Expect</h2><p>Booking a Nuru Massage in Istanbul is straightforward. You can reach out via WhatsApp or phone; all three listed places offer both options for convenience. Upon arrival, you will typically be welcomed warmly by staff who will guide you through the process. Prices generally start at around <strong>TRY 800</strong> for a standard session lasting about one hour.</p><p>Your first visit will likely include an introduction to the massage techniques used during your session. The atmosphere is usually calm and professional, allowing you to relax fully into the experience. Expect gentle interaction with your therapist throughout your visit.</p><h2>Safety and Etiquette in Turkey</h2><p>When engaging with Nuru Massage services in Turkey, it’s important to be aware of local customs. Payments are typically made in <strong>TRY</strong>, so having cash on hand is advisable although many places accept cards as well. Tipping around 10% is customary if you're satisfied with your service.</p><pLanguage may pose a challenge as not everyone speaks English fluently; however, most establishments have staff members who can communicate basic information clearly. To ensure a quality experience, look for establishments that display positive reviews or recommendations from previous clients.</p><h2>Why Istanbul Stands Apart</h2><p>Istanbul's rich cultural heritage gives its Nuru Massage offerings a unique flavor compared to other cities worldwide. Here, ancient traditions blend effortlessly with modern practices, creating an atmosphere that feels both grounding and liberating for visitors seeking relaxation.</p>
+
+<h2>Getting Around Istanbul: Transport and Neighborhoods</h2><p>Navigating Istanbul is relatively easy thanks to its extensive public transport system, including metro lines, buses, and taxis available through apps like Grab or Uber. Walking is also popular among visitors who want to soak up the local ambiance while traveling short distances. The climate can be quite variable depending on the season; summers are warm while winters can be chilly.</p><p key='money'>In terms of currency, transactions are generally conducted in <strong>TRY</strong>. While cash remains king at smaller venues, many larger businesses do accept credit cards without issue. English proficiency varies among locals; however, you'll find that younger generations often speak some level of English making communication easier during your visit.</p>
+
+<h2>Your First Visit: Step by Step</h2><p>The booking process for Nuru Massage typically begins via WhatsApp or phone call where you'll provide your name and preferred time slot. Most responses come back quickly within an hour or so; walk-in availability varies by location but it’s always wise to call ahead if possible.<br />Sessions generally last around one hour offering ample time for relaxation.</p><p>Your arrival will usually start with friendly greetings from staff members who will explain what to expect during your session. Pricing discussions happen upfront allowing you clarity on costs involved such as any additional services you may want during your visit.<br />Tipping norms suggest approximately 10%, depending on how pleased you are with your massage experience; feedback after your session helps improve their services too.</p>`;
+const bottomHtml = `<h2>Start Browsing Nuru Massage in Istanbul</h2><p>You can find several listings featuring gold-verified locations specializing exclusively in Nuru Massage within our directory. Each entry includes photos along with contact details making it easy for potential clients to connect directly via WhatsApp, often regarded as the fastest method.<br />Take some time browsing specific listings before making plans; this way you’ll get a better sense of each establishment's vibe.</p><pLastly, consider visiting during quieter hours if possible since it may enhance your overall experience significantly, especially if you're unsure which place fits best for what you're looking for!</p>`;
+
+// Split listings for different sections
+const premiumListings = listings.filter((l: any) => l.is_premium);
+const goldListings = listings.filter((l: any) => l.is_gold);
+const regularListings = listings.filter((l: any) => !l.is_premium);
+
+// Get top 5 listings for hero slider (Gold first, then Premium)
+const heroListings = [...goldListings, ...premiumListings.filter((l: any) => !l.is_gold), ...regularListings]
+    .filter((l: any) => l.thumbnail)
+    .slice(0, 5);
+---
+
+<Base 
+    title="Nuru Massage Istanbul 2026 Guide"
+    description="Explore Nuru Massage in Istanbul with our directory of 3 verified locations in Place Taksim."
+    canonical={canonicalUrl}
+    image={heroListings.length > 0 ? heroListings[0].thumbnail : 'https://erotikmaps.com/images/og-default.jpg'}
+>
+    <!-- Compact Hero Section -->
+    <section class="hero-compact">
+        <div class="container">
+            <h1>A Practical Guide to Nuru Massage in Istanbul</h1>
+            <p class="hero-subtitle">{listings.length > 0 ? listings.length + ' verified listings' : 'Directory growing'} {isCountryFallback ? 'in ' + 'Turkey' : 'in ' + 'Istanbul'}</p>
+            <div class="hero-badges">
+                {goldListings.length > 0 && <span class="badge-stat gold">⭐ {goldListings.length} Gold</span>}
+                {premiumListings.length > 0 && <span class="badge-stat premium">✨ {premiumListings.length} Silver</span>}
+            </div>
+            <p class="last-updated">📅 Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+        </div>
+    </section>
+    
+    <!-- GeoBanner - HIGH on page, right after hero -->
+    <div class="home-banner-slot top-banner">
+        <div class="container">
+            <GeoBanner />
+        </div>
+    </div>
+    
+    <!-- Listings Grid - Mobile First -->
+    <section class="listings" id="all-listings">
+        <div class="container">
+            <div class="listings-header">
+                <h2><span class="heading-icon" aria-hidden="true">🏢</span> Best Nuru Massage in Istanbul</h2>
+                {isCountryFallback ? (
+                    <p class="listings-intro fallback-notice">
+                        📍 Our Istanbul directory is growing. In the meantime, here are {listings.length} verified listings from Turkey you may find interesting.
+                    </p>
+                ) : (
+                    <p class="listings-intro">
+                        {listings.length > 0 
+                            ? `Browse ${listings.length} verified nuru massage listings in Istanbul. Gold and Silver listings appear first.`
+                            : `We are building our nuru massage directory for Istanbul. New listings are added regularly.`
+                        }
+                    </p>
+                )}
+            </div>
+            <div class="listings-grid-3">
+                {listings.map((listing: any) => (
+                    <ListingCard listing={listing} />
+                ))}
+            </div>
+            
+            {listings.length === 0 && (
+                <div class="no-listings">
+                    <p>We are currently building our directory for Istanbul. New listings are added regularly.</p>
+                    <p>Own a nuru massage business in Istanbul? <a href="/advertise">Add your listing for free</a> and be among the first to appear here.</p>
+                </div>
+            )}
+        </div>
+    </section>
+    
+    <!-- Related Categories - Cross-promotion -->
+    {relatedListings.length > 0 && (
+        <section class="related-categories" id="related-venues">
+            <div class="container">
+                <h2><span class="heading-icon" aria-hidden="true">🔥</span> More Adult Entertainment Near Istanbul</h2>
+                <p class="section-intro">Discover other adult venues in Turkey</p>
+                
+                {relatedListings.map((cat) => (
+                    <div class="related-category-block">
+                        <h3>{cat.icon} {cat.label} {cat.isCountry ? 'in ' + 'Turkey' : 'Near ' + 'Istanbul'}</h3>
+                        <div class="listings-grid-3">
+                            {cat.listings.map((listing: any) => (
+                                <ListingCard listing={listing} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    )}
+    
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="container">
+            <h2><span class="heading-icon" aria-hidden="true">📖</span> About Nuru Massage in Istanbul</h2>
+            <div class="about-content" set:html={introHtml} />
+        </div>
+    </section>
+    
+    <!-- Category Navigation -->
+    <CategoryNav city="Istanbul" mainCategory="erotic-massage" />
+    
+    <!-- Table of Contents - SEO Navigation (lower on page) -->
+    <nav class="toc-section" aria-label="Page contents" id="navigation">
+        <div class="container">
+            <details open>
+                <summary class="toc-title">📑 Quick Navigation</summary>
+                <ul class="toc-list">
+                    <li><a href="#all-listings">🏢 {listings.length > 0 ? `All ${listings.length} Listings` : 'Browse Listings'}</a></li>
+                    <li><a href="#about">📖 About Nuru Massage</a></li>
+                    <li><a href="#categories">🏷️ Venue Types</a></li>
+                    {faq && faq.length > 0 && <li><a href="#faq">❓ FAQ ({faq.length} questions)</a></li>}
+                    <li><a href="#local-guide">🗺️ Local Guide</a></li>
+                    <li><a href="#pricing">💰 Pricing Guide</a></li>
+                </ul>
+            </details>
+        </div>
+    </nav>
+    
+    <!-- Network Links - Links to other satellite sites -->
+    <NetworkLinks currentCity="Istanbul" currentCountry="Turkey" category="erotic-massage" />
+    
+    <!-- Internal Links Section -->
+    <InternalLinks city="Istanbul" country="Turkey" category="Nuru Massage" />
+    
+    <!-- Owner CTA Section - Encourage venue owners to create listings -->
+    <OwnerCTA city="Istanbul" country="Turkey" category="Nuru Massage" />
+    
+    <!-- FAQ Section -->
+    {faq && faq.length > 0 && (
+        <section class="faq" id="faq">
+            <div class="container">
+                <h2>Frequently Asked Questions about Nuru Massage in Istanbul</h2>
+                <div class="faq-list">
+                    {faq.map((item: any, index: number) => (
+                        <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                            <h3 itemprop="name">{item.question}</h3>
+                            <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                                <div itemprop="text" set:html={item.answer} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    )}
+    
+    <!-- Local Guide Section - AI-Generated Unique SEO Content -->
+    <section class="local-guide" id="local-guide">
+        <div class="container">
+            <h2><span class="heading-icon" aria-hidden="true">🗺️</span> Nuru Massage Guide for Istanbul</h2>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h3><span class="heading-icon" aria-hidden="true">🏙️</span> Where to Find Venues</h3>
+                    <p>{`If you're searching for Nuru Massage spots in Istanbul, the Place Taksim area is your best bet. This neighborhood is known for its lively atmosphere and numerous wellness establishments. You can easily find several salons offering Nuru Massage services within walking distance of popular attractions. Additionally, areas near Istiklal Street are also home to various massage studios that specialize in this unique technique. The central location makes it convenient for both locals and tourists to access these establishments.`}</p>
+                </div>
+                <div class="guide-card">
+                    <h3><span class="heading-icon" aria-hidden="true">⏰</span> When to Visit</h3>
+                    <p>{`The ideal times to experience Nuru Massage in Istanbul are typically during weekdays when crowds are smaller. Most venues open around 10 AM and close by midnight, so aim for late morning or early afternoon visits for a more relaxed experience. Weekends may see higher foot traffic, especially on Saturday evenings, making it wise to book appointments in advance if you're planning a visit then. If you want a spontaneous session, try going early in the day or on less busy weekdays.`}</p>
+                </div>
+                <div class="guide-card">
+                    <h3><span class="heading-icon" aria-hidden="true">💳</span> Payment Info</h3>
+                    <p>{`In Istanbul, it's advisable to carry some cash in Turkish Lira (TRY) as many places may not accept cards. Common denominations include 5 TRY, 10 TRY, 20 TRY, and higher bills for larger payments. Most Nuru Massage salons do accept credit cards but confirm beforehand since acceptance varies by establishment. Tipping is customary; around 10-15% is appreciated for good service. ATMs are widely available but watch out for potential fees when withdrawing cash; be mindful of exchange rates too.`}</p>
+                </div>
+                <div class="guide-card">
+                    <h3><span class="heading-icon" aria-hidden="true">🌐</span> Language Tips</h3>
+                    <p>{`English proficiency among staff at Nuru Massage locations in Istanbul can vary from place to place. Many employees understand basic English phrases, but learning a few local words can enhance your experience. Useful phrases include 'Merhaba' (hello), 'Teşekkür ederim' (thank you), and 'Ne kadar?' (how much?). Translation apps can be handy for communication barriers. WhatsApp is also an excellent way to connect with salons before your visit or make inquiries.`}</p>
+                </div>
+            </div>
+            <div class="guide-tips">
+                <h3><span class="heading-icon" aria-hidden="true">💡</span> Tips for First-Time Visitors</h3>
+                <ul>
+                    <li>✓ Contact the venue directly to confirm they are open before visiting</li>
+                    <li>✓ Check our listings for services offered, photos, and pricing</li>
+                    <li>✓ Look for Gold ⭐ and Silver ✨ badges for verified establishments</li>
+                    <li>✓ Book in advance during evenings and weekends for the best availability</li>
+                    <li>✓ Respect the venue's rules, staff, and other guests</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pricing Guide Section - AI-Generated Unique Content -->
+    <section class="pricing-guide" id="pricing">
+        <div class="container">
+            <h2><span class="heading-icon" aria-hidden="true">💰</span> Nuru Massage Pricing in Istanbul</h2>
+            <p class="pricing-intro">Prices for Nuru Massage services in Istanbul depend on the venue, service type, and duration.</p>
+            <div class="pricing-table">
+                <div class="price-tier">
+                    <span class="tier-label">Budget</span>
+                    <span class="tier-range">{`Starting at around 400 TRY.`}</span>
+                    <p>Smaller or newer venues. Suitable for first-time visitors looking to try the experience.</p>
+                </div>
+                <div class="price-tier featured">
+                    <span class="tier-label">⭐ Mid-Range</span>
+                    <span class="tier-range">{`Typically between 600-800 TRY.`}</span>
+                    <p>Established venues with good reviews. The most popular choice among visitors.</p>
+                </div>
+                <div class="price-tier">
+                    <span class="tier-label">✨ High-End</span>
+                    <span class="tier-range">{`Can go up to 1200 TRY or more.`}</span>
+                    <p>Top-rated Gold and Silver establishments with extended services and quality amenities.</p>
+                </div>
+            </div>
+            <p class="pricing-note">💡 <strong>Tip:</strong> {`Pricing for Nuru Massage in Istanbul varies based on factors like time of day and day of the week. Weekends generally have higher rates compared to weekdays due to increased demand. Special packages or longer sessions may also influence costs significantly; thus it’s advisable to inquire about any deals available during your visit. Be cautious of hidden fees; confirm what's included before booking.`}</p>
+        </div>
+    </section>
+    
+    <!-- Bottom Section / Call to Action -->
+    <section class="bottom-content">
+        <div class="container">
+            <div class="bottom-content-text" set:html={bottomHtml} />
+            
+            <div class="cta-box">
+                <h3>Looking for something specific?</h3>
+                <p>{listings.length > 0 ? `Browse our ${listings.length} listings above, or click on any listing for photos and contact info.` : 'Check back soon as we add new listings to this directory regularly.'}</p>
+                <a href="#all-listings" class="btn-primary">Browse All Listings</a>
+            </div>
+        </div>
+    </section>
+    
+    
+    <!-- Schema.org - ItemList -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "Nuru Massage Istanbul 2026 Guide",
+        "description": "Explore Nuru Massage in Istanbul with our directory of 3 verified locations in Place Taksim.",
+        "url": canonicalUrl,
+        "numberOfItems": listings.length,
+        "itemListElement": listings.map((listing: any, index: number) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "item": {
+                "@type": "LocalBusiness",
+                "name": listing.name,
+                "url": `https://nurumassageistanbul.top/${listing.slug}`,
+                "image": listing.thumbnail,
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": "Istanbul",
+                    "addressCountry": "Turkey"
+                }
+            }
+        }))
+    })}></script>
+    
+    <!-- Schema.org - FAQPage -->
+    {faq && faq.length > 0 && (
+        <script type="application/ld+json" set:html={JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faq.map((item: any) => ({
+                "@type": "Question",
+                "name": item.question,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": item.answer
+                }
+            }))
+        })}></script>
+    )}
+    
+    <!-- Schema.org - WebPage -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "Nuru Massage Istanbul 2026 Guide",
+        "description": "Explore Nuru Massage in Istanbul with our directory of 3 verified locations in Place Taksim.",
+        "url": canonicalUrl,
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Istanbul Nuru Massage 🌍",
+            "url": "https://nurumassageistanbul.top"
+        },
+        "about": {
+            "@type": "Thing",
+            "name": "Nuru Massage in Istanbul"
+        },
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://nurumassageistanbul.top"
+                }
+            ]
+        }
+    })}></script>
+    
+    <!-- Sticky CTA Footer for Live Cams -->
+    <a href="https://erotiklive.net/" target="_blank" rel="nofollow noopener" class="live-cta-sticky">
+        <span class="live-dot"></span>
+        <span class="live-text">Watch Girls Online</span>
+    </a>
+</Base>
+
+<style>
+    /* Sticky Live CTA Footer - Full Width */
+    .live-cta-sticky {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-decoration: none;
+        box-shadow: 
+            0 -4px 20px rgba(236, 72, 153, 0.4),
+            0 -2px 10px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .live-cta-sticky:hover {
+        background: linear-gradient(135deg, #db2777 0%, #e11d48 100%);
+    }
+    
+    .live-dot {
+        width: 14px;
+        height: 14px;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: pulseDot 1.5s infinite;
+        box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+    }
+    
+    .live-text {
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    
+    @keyframes pulseDot {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.85; }
+    }
+    
+    @media (max-width: 600px) {
+        .live-cta-sticky {
+            padding: 16px 20px;
+            font-size: 1rem;
+        }
+    }
+    
+    /* Compact Hero */
+    .hero-compact {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 30px 0;
+        text-align: center;
+    }
+    .hero-compact h1 {
+        font-size: clamp(1.4rem, 4vw, 2rem);
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    .hero-compact .hero-subtitle {
+        font-size: 0.95rem;
+        opacity: 0.9;
+        margin-bottom: 12px;
+    }
+    
+    /* Decorative emoji icons - hidden from SEO crawlers */
+    .heading-icon {
+        display: inline-block;
+        margin-right: 4px;
+        font-style: normal;
+    }
+    
+    .hero-badges {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .badge-stat {
+        background: rgba(255,255,255,0.2);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .badge-stat.gold { background: rgba(255,215,0,0.3); }
+    .badge-stat.premium { background: rgba(255,255,255,0.25); }
+    .last-updated {
+        font-size: 0.8rem;
+        opacity: 0.7;
+        margin-top: 12px;
+    }
+    
+    /* Table of Contents */
+    .toc-section {
+        background: var(--card-bg);
+        padding: 20px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .toc-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .toc-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        list-style: none;
+        padding: 16px 0 0;
+        margin: 0;
+    }
+    .toc-list li a {
+        font-size: 0.9rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 6px 12px;
+        background: var(--bg);
+        border-radius: 20px;
+        transition: all 0.2s ease;
+    }
+    .toc-list li a:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    @media (max-width: 600px) {
+        .toc-list { flex-direction: column; gap: 8px; }
+        .toc-list li a { display: block; text-align: center; }
+    }
+    
+    /* Local Guide Section */
+    .local-guide {
+        padding: 60px 0;
+        background: var(--card-bg);
+    }
+    .local-guide h2 {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .guide-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    .guide-card {
+        background: var(--bg);
+        padding: 24px;
+        border-radius: 16px;
+    }
+    .guide-card h3 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+    .guide-card p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        line-height: 1.6;
+    }
+    .guide-tips {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        padding: 30px;
+        border-radius: 16px;
+        color: white;
+    }
+    .guide-tips h3 {
+        margin-bottom: 16px;
+    }
+    .guide-tips ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .guide-tips li {
+        padding: 8px 0;
+        font-size: 0.95rem;
+        opacity: 0.95;
+    }
+    @media (max-width: 900px) {
+        .guide-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+        .guide-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Pricing Guide Section */
+    .pricing-guide {
+        padding: 60px 0;
+    }
+    .pricing-guide h2 {
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    .pricing-intro {
+        text-align: center;
+        color: var(--text-light);
+        margin-bottom: 40px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .pricing-table {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .price-tier {
+        background: var(--card-bg);
+        padding: 30px 24px;
+        border-radius: 16px;
+        text-align: center;
+        border: 2px solid var(--border);
+    }
+    .price-tier.featured {
+        border-color: var(--primary);
+        transform: scale(1.05);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .tier-label {
+        display: block;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+        color: var(--text);
+    }
+    .tier-range {
+        display: block;
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    .price-tier p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        line-height: 1.5;
+    }
+    .pricing-note {
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-light);
+        background: var(--bg);
+        padding: 16px;
+        border-radius: 8px;
+    }
+    @media (max-width: 768px) {
+        .pricing-table { grid-template-columns: 1fr; }
+        .price-tier.featured { transform: none; }
+    }
+    
+    /* Listings Grid - Mobile First (1 col mobile, 2 tablet, 3 desktop) */
+    .listings-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    @media (min-width: 540px) {
+        .listings-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 900px) {
+        .listings-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+    
+    /* Related Categories - Cross Promotion */
+    .related-categories {
+        background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+        padding: 40px 0;
+        border-top: 1px solid var(--border);
+    }
+    .related-categories h2 {
+        font-size: 1.5rem;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    .related-categories .section-intro {
+        text-align: center;
+        color: var(--text-light);
+        margin-bottom: 30px;
+    }
+    .related-category-block {
+        margin-bottom: 30px;
+    }
+    .related-category-block:last-child {
+        margin-bottom: 0;
+    }
+    .related-category-block h3 {
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--primary);
+        display: inline-block;
+    }
+    
+    @media (max-width: 768px) {
+        .related-categories {
+            padding: 24px 0;
+        }
+        .related-categories h2 {
+            font-size: 1.25rem;
+        }
+        .related-category-block h3 {
+            font-size: 1rem;
+        }
+    }
+    
+    /* About Section */
+    .about-section {
+        background: var(--card-bg);
+        padding: 40px 0;
+    }
+    .about-section h2 {
+        font-size: 1.4rem;
+        margin-bottom: 16px;
+    }
+    .about-content {
+        color: var(--text-light);
+        line-height: 1.7;
+    }
+    .about-content p { margin-bottom: 14px; }
+    .about-content h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-top: 32px;
+        margin-bottom: 12px;
+        color: var(--text);
+        padding-top: 12px;
+        border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .about-content h2:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+    
+    /* Listings Section */
+    .listings-header {
+        margin-bottom: 16px;
+    }
+    
+    .listings-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text);
+    }
+    
+    .listings-intro {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .listings-intro.fallback-notice {
+        background: linear-gradient(135deg, var(--primary-light, #f0f7ff) 0%, var(--bg) 100%);
+        padding: 12px 16px;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary);
+        font-size: 0.9rem;
+    }
+    
+    .listings-intro.fallback-notice strong {
+        color: var(--primary);
+    }
+    
+    .section-intro {
+        color: var(--text-light);
+        margin-bottom: 25px;
+    }
+    .premium-section {
+        background: linear-gradient(135deg, #D4AF3710, #F4D03F10);
+    }
+    .cta-box {
+        background: linear-gradient(135deg, var(--primary)10, var(--secondary)10);
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 30px;
+        text-align: center;
+    }
+    .cta-box h3 {
+        margin-bottom: 10px;
+    }
+    .cta-box p {
+        margin-bottom: 20px;
+        color: var(--text-light);
+    }
+    .sitemap-links {
+        padding: 40px 0;
+        background: var(--bg);
+    }
+    .sitemap-links h2 {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
+    .venue-links {
+        column-count: 3;
+        column-gap: 30px;
+        list-style: none;
+        padding: 0;
+    }
+    .venue-links li {
+        margin-bottom: 8px;
+        break-inside: avoid;
+    }
+    .venue-links a {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+    .venue-links a:hover {
+        color: var(--primary);
+    }
+    @media (max-width: 768px) {
+        .venue-links {
+            column-count: 1;
+        }
+    }
+</style>

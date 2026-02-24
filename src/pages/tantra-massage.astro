@@ -1,0 +1,509 @@
+---
+import Base from '../layouts/Base.astro';
+import ListingCard from '../components/ListingCard.astro';
+import CategoryNav from '../components/CategoryNav.astro';
+import InternalLinks from '../components/InternalLinks.astro';
+import OwnerCTA from '../components/OwnerCTA.astro';
+import NetworkLinks from '../components/NetworkLinks.astro';
+import GeoBanner from '../components/GeoBanner.astro';
+
+// Safe fetch helper for fake category pages
+async function safeFetch(url: string): Promise<any[]> {
+    try {
+        console.log('[fakeCat] Fetching:', url);
+        const res = await fetch(url, { 
+            headers: { 
+                'Accept': 'application/json',
+                'User-Agent': 'ErotikMaps-Satellite-Builder/1.0',
+                'X-Satellite-Build': 'true'
+            } 
+        });
+        if (!res.ok) return [];
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return [];
+        const data = await res.json();
+        return data.data || [];
+    } catch (e) {
+        console.error('[fakeCat] Fetch failed:', e);
+        return [];
+    }
+}
+
+// Fetch listings for this specific fake category
+const apiUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=tantra-massage&limit=50';
+let listings = await safeFetch(apiUrl);
+
+// If no specific listings, fallback to main category in city
+if (listings.length === 0) {
+    const fallbackUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=erotic-massage&limit=30';
+    listings = await safeFetch(fallbackUrl);
+}
+
+// If still no listings, fallback to country (Gold + premium + 20 others)
+if (listings.length === 0) {
+    const countryUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?country=turkey&category=erotic-massage&limit=200';
+    const allCountryListings = await safeFetch(countryUrl);
+    if (allCountryListings.length > 0) {
+        const goldOnes = allCountryListings.filter((l: any) => l.is_gold);
+        const premiumOnes = allCountryListings.filter((l: any) => l.is_premium && !l.is_gold);
+        const others = allCountryListings.filter((l: any) => !l.is_premium && !l.is_gold);
+        const selected = others.sort((a: any, b: any) => (a.id || 0) - (b.id || 0)).slice(0, 20);
+        listings = [...goldOnes, ...premiumOnes, ...selected];
+    }
+}
+
+const canonicalUrl = 'https://nurumassageistanbul.top/tantra-massage';
+const buildDate = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+---
+
+<Base 
+    title="Tantra Massage in Istanbul — Practitioners & Venues 2026"
+    description="Discover tantra massage in Istanbul. Ancient practice combining energy work and bodywork. Find verified practitioners in Turkey."
+    canonical={canonicalUrl}
+    image={listings.length > 0 && listings[0].thumbnail ? listings[0].thumbnail : 'https://erotikmaps.com/images/og-default.jpg'}
+>
+    <!-- Hero Section -->
+    <section class="hero category-hero">
+        <div class="container">
+            <span class="hero-icon">☯️</span>
+            <h1>Tantra Massage in Istanbul</h1>
+            <p class="hero-subtitle">
+                {listings.length > 0 
+                    ? `Discover ${listings.length} verified Tantra Massage venues in Istanbul` 
+                    : `Find Tantra Massage options in Istanbul, Turkey`
+                }
+            </p>
+            <p class="last-updated-hero">Updated {buildDate}</p>
+        </div>
+    </section>
+    
+    <!-- Category Navigation - Internal Links to other sub-types -->
+    <CategoryNav city="Istanbul" currentCategory="tantra-massage" mainCategory="erotic-massage" />
+    
+    <!-- Intro Content - UNIQUE per sub-category -->
+    <section class="intro">
+        <div class="container">
+            <h2>About Tantra Massage in Istanbul</h2>
+            <p>Tantra massage in Istanbul is rooted in ancient tantric philosophy, which views the body as a vehicle for spiritual and energetic transformation. Unlike purely physical massage, tantra incorporates breathwork, energy channeling, and mindfulness into a complete mind-body practice.</p>
+            <p>Practitioners in Istanbul typically have training in tantric philosophy and body-energy work. Sessions tend to be longer than standard massage — often 2 hours or more — and are designed to help you achieve a deep state of relaxation and heightened awareness.</p>
+        </div>
+    </section>
+    
+    <!-- What to Expect - UNIQUE content per sub-category -->
+    <section class="what-to-expect">
+        <div class="container">
+            <h2>What to Expect from Tantra Massage in Istanbul</h2>
+            <div class="expect-grid">
+                                <div class="expect-card">
+                    <span class="expect-icon">☯️</span>
+                    <h3>Mind-Body Practice</h3>
+                    <p>Tantra massage in Istanbul treats the body and mind as one — sessions aim to balance physical tension with mental clarity.</p>
+                </div>                <div class="expect-card">
+                    <span class="expect-icon">🫁</span>
+                    <h3>Breathwork Integral</h3>
+                    <p>Controlled breathing is a key element. Practitioners guide you through breathing patterns to deepen relaxation.</p>
+                </div>                <div class="expect-card">
+                    <span class="expect-icon">🔋</span>
+                    <h3>Energy Channeling</h3>
+                    <p>The practitioner works with your body's energy centers (chakras), using touch and intention to release blockages.</p>
+                </div>                <div class="expect-card">
+                    <span class="expect-icon">📿</span>
+                    <h3>Philosophical Foundation</h3>
+                    <p>Sessions are grounded in tantric philosophy — expect a more holistic, less transactional experience than standard massage.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How to Choose - SEO Content -->
+    <section class="how-to-choose">
+        <div class="container">
+            <h2>How to Choose the Best Tantra Massage in Istanbul</h2>
+            <ol class="choose-steps">
+                <li>
+                    <strong>Browse our verified listings</strong> — All Tantra Massage venues in our Istanbul directory have been reviewed for authenticity.
+                </li>
+                <li>
+                    <strong>Compare photos and services</strong> — Each listing includes a gallery, service details, and direct contact info.
+                </li>
+                <li>
+                    <strong>Look for Gold and Silver badges</strong>, these indicate listings verified for exceptional quality and service.
+                </li>
+                <li>
+                    <strong>Contact directly via WhatsApp or phone</strong> — No middleman. Ask about availability, pricing, and special offers.
+                </li>
+                <li>
+                    <strong>Check the FAQ below</strong> — We answer common questions about Tantra Massage in Istanbul.
+                </li>
+            </ol>
+        </div>
+    </section>
+    
+    <!-- Listings Grid -->
+    <section class="listings" id="listings">
+        <div class="container">
+            <h2>Tantra Massage Venues in Istanbul</h2>
+            {listings.length > 0 ? (
+                <div class="listings-grid">
+                    {listings.map((listing: any) => (
+                        <ListingCard listing={listing} />
+                    ))}
+                </div>
+            ) : (
+                <div class="no-listings">
+                    <p>No specific Tantra Massage venues found in Istanbul yet.</p>
+                    <p>
+                        <a href="/" class="btn-primary">Browse All Erotic Massage Venues →</a>
+                    </p>
+                    <p class="cta-text">
+                        Own a Tantra Massage venue in Istanbul? 
+                        <a href="https://gopremium.app/create-listing" rel="nofollow" title="Add your venue">
+                            List it for FREE
+                        </a>!
+                    </p>
+                </div>
+            )}
+        </div>
+    </section>
+    
+    <!-- GeoBanner for category pages -->
+    <div class="category-banner-slot">
+        <div class="container">
+            <GeoBanner />
+        </div>
+    </div>
+    
+    <!-- FAQ Section - UNIQUE per sub-category with FAQPage Schema -->
+    <section class="category-faq" id="faq" itemscope itemtype="https://schema.org/FAQPage">
+        <div class="container">
+            <h2><span class="heading-icon" aria-hidden="true">❓</span> Tantra Massage in Istanbul — FAQ</h2>
+            <div class="faq-grid">
+                                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">Is tantra massage the same as tantric massage?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">The terms are used interchangeably. Both refer to massage practices rooted in tantric philosophy that combine bodywork with breathwork and energy channeling. In Istanbul, practitioners may use either term.</p>
+                    </div>
+                </div>                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">Do I need to have any spiritual beliefs for tantra massage?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Not at all. While tantra has spiritual roots, you do not need to follow any particular belief system. Many clients in Istanbul approach it purely as a relaxation and bodywork experience.</p>
+                    </div>
+                </div>                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">What should I expect in my first tantra session?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Expect a longer session (90 min to 2 hours). Your practitioner will explain the process, guide you through breathing exercises, and work on your body with slow, intentional touch. Communication is encouraged throughout.</p>
+                    </div>
+                </div>                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">How much does tantra massage cost in Istanbul?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Tantra sessions in Istanbul tend to be priced higher than standard massage due to the specialized training and longer duration. Check individual listings for specific pricing.</p>
+                    </div>
+                </div>                <div class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                    <h3 itemprop="name">Can tantra massage help with stress or anxiety?</h3>
+                    <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                        <p itemprop="text">Many clients report significant stress relief after tantra sessions. The combination of breathwork, gentle touch, and extended duration can help reduce anxiety and promote a sense of calm. It is not a medical treatment, but many find it beneficial.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Related Categories - DYNAMIC based on actual main category -->
+    <section class="related-cats">
+        <div class="container">
+            <h2>More Erotic Massage Types in Istanbul</h2>
+            <div class="related-grid">
+                <a href="/" class="related-link main">🏠 All Erotic Massage</a>
+                <a href="/nuru-massage" class="related-link">💆 Nuru Massage</a>
+                <a href="/tantric-massage" class="related-link">🕉️ Tantric Massage</a>
+                <a href="/body-to-body-massage" class="related-link">✨ Body to Body Massage</a>
+                <a href="/sensual-massage" class="related-link">💕 Sensual Massage</a>
+                <a href="/happy-ending-massage" class="related-link">😊 Happy Ending Massage</a>
+                <a href="/adult-massage" class="related-link">🔞 Adult Massage</a>
+                
+            </div>
+            <p class="more-link">
+                Discover more <a href="https://erotikmaps.com/tantra-massage" title="Tantra Massage worldwide">Tantra Massage venues worldwide</a> on ErotikMaps
+            </p>
+        </div>
+    </section>
+    
+    <!-- Network Links - Links to other satellite sites -->
+    <NetworkLinks currentCity="Istanbul" currentCountry="Turkey" category="erotic-massage" />
+    
+    <!-- Internal Links -->
+    <InternalLinks city="Istanbul" country="Turkey" category="Tantra Massage" />
+    
+    <!-- Owner CTA -->
+    <OwnerCTA city="Istanbul" country="Turkey" category="Tantra Massage" />
+    
+    <!-- Schema.org - CollectionPage + FAQPage -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Tantra Massage in Istanbul",
+        "description": "Discover tantra massage in Istanbul. Ancient practice combining energy work and bodywork. Find verified practitioners in Turkey.",
+        "url": canonicalUrl,
+        "dateModified": new Date().toISOString(),
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Istanbul Nuru Massage",
+            "url": "https://nurumassageistanbul.top"
+        },
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://nurumassageistanbul.top" },
+                { "@type": "ListItem", "position": 2, "name": "Tantra Massage", "item": canonicalUrl }
+            ]
+        }
+    })}></script>
+    <script type="application/ld+json" set:html={`{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Is tantra massage the same as tantric massage?","acceptedAnswer":{"@type":"Answer","text":"The terms are used interchangeably. Both refer to massage practices rooted in tantric philosophy that combine bodywork with breathwork and energy channeling. In Istanbul, practitioners may use either term."}},{"@type":"Question","name":"Do I need to have any spiritual beliefs for tantra massage?","acceptedAnswer":{"@type":"Answer","text":"Not at all. While tantra has spiritual roots, you do not need to follow any particular belief system. Many clients in Istanbul approach it purely as a relaxation and bodywork experience."}},{"@type":"Question","name":"What should I expect in my first tantra session?","acceptedAnswer":{"@type":"Answer","text":"Expect a longer session (90 min to 2 hours). Your practitioner will explain the process, guide you through breathing exercises, and work on your body with slow, intentional touch. Communication is encouraged throughout."}},{"@type":"Question","name":"How much does tantra massage cost in Istanbul?","acceptedAnswer":{"@type":"Answer","text":"Tantra sessions in Istanbul tend to be priced higher than standard massage due to the specialized training and longer duration. Check individual listings for specific pricing."}},{"@type":"Question","name":"Can tantra massage help with stress or anxiety?","acceptedAnswer":{"@type":"Answer","text":"Many clients report significant stress relief after tantra sessions. The combination of breathwork, gentle touch, and extended duration can help reduce anxiety and promote a sense of calm. It is not a medical treatment, but many find it beneficial."}}]}`}></script>
+    
+    <!-- Sticky CTA Footer for Live Cams -->
+    <a href="https://erotiklive.net/" target="_blank" rel="nofollow noopener" class="live-cta-sticky">
+        <span class="live-dot"></span>
+        <span class="live-text">Watch Girls Online</span>
+    </a>
+</Base>
+
+<style>
+    /* Sticky Live CTA Footer - Full Width */
+    .live-cta-sticky {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 18px 24px;
+        background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-decoration: none;
+        box-shadow: 
+            0 -4px 20px rgba(236, 72, 153, 0.4),
+            0 -2px 10px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .live-cta-sticky:hover {
+        background: linear-gradient(135deg, #db2777 0%, #e11d48 100%);
+    }
+    
+    .live-dot {
+        width: 14px;
+        height: 14px;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: pulseDot 1.5s infinite;
+        box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+    }
+    
+    .live-text {
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    
+    @keyframes pulseDot {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.85; }
+    }
+    
+    @media (max-width: 600px) {
+        .live-cta-sticky {
+            padding: 16px 20px;
+            font-size: 1rem;
+        }
+    }
+    
+    .category-hero {
+        text-align: center;
+    }
+    .hero-icon {
+        font-size: 4rem;
+        display: block;
+        margin-bottom: 15px;
+    }
+    
+    /* What to Expect Section */
+    .what-to-expect {
+        padding: 60px 0;
+        background: var(--card-bg);
+    }
+    .what-to-expect h2 {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .expect-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
+    }
+    .expect-card {
+        background: var(--bg);
+        padding: 30px 24px;
+        border-radius: 16px;
+        text-align: center;
+    }
+    .expect-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 16px;
+    }
+    .expect-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+        color: var(--text);
+    }
+    .expect-card p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        line-height: 1.6;
+    }
+    @media (max-width: 900px) {
+        .expect-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 500px) {
+        .expect-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Category FAQ Section */
+    .category-faq {
+        padding: 60px 0;
+        background: var(--bg);
+    }
+    .category-faq h2 {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .faq-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .category-faq .faq-item {
+        background: var(--card-bg);
+        padding: 24px;
+        border-radius: 16px;
+        border-left: 4px solid var(--primary);
+    }
+    .category-faq .faq-item h3 {
+        font-size: 1rem;
+        margin-bottom: 12px;
+        color: var(--text);
+    }
+    .category-faq .faq-item p {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        line-height: 1.7;
+        margin: 0;
+    }
+    @media (max-width: 768px) {
+        .faq-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* How to Choose Section */
+    .how-to-choose {
+        padding: 60px 0;
+    }
+    .how-to-choose h2 {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .choose-steps {
+        max-width: 700px;
+        margin: 0 auto;
+        padding-left: 0;
+        list-style: none;
+        counter-reset: step;
+    }
+    .choose-steps li {
+        counter-increment: step;
+        position: relative;
+        padding: 20px 20px 20px 70px;
+        margin-bottom: 16px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        line-height: 1.6;
+    }
+    .choose-steps li::before {
+        content: counter(step);
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    .choose-steps li strong {
+        color: var(--text);
+    }
+    
+    .no-listings {
+        text-align: center;
+        padding: 50px 20px;
+        background: var(--card-bg);
+        border-radius: 12px;
+    }
+    .no-listings p {
+        margin-bottom: 15px;
+    }
+    .cta-text {
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    .related-cats {
+        padding: 50px 0;
+        background: var(--card-bg);
+    }
+    .related-cats h2 {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .related-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+    .related-link {
+        padding: 12px 20px;
+        background: var(--bg);
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--text);
+        transition: all 0.2s;
+    }
+    .related-link:hover {
+        background: var(--primary);
+        color: white;
+    }
+    .related-link.main {
+        background: var(--primary);
+        color: white;
+    }
+    .more-link {
+        text-align: center;
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    .more-link a {
+        color: var(--primary);
+    }
+</style>

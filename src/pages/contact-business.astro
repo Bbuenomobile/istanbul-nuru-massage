@@ -1,0 +1,189 @@
+---
+import Base from '../layouts/Base.astro';
+
+const canonicalUrl = 'https://nurumassageistanbul.top/contact-business';
+---
+
+<Base 
+    title="Contact Us - Nuru Massage Advertising in Istanbul | Business Inquiries"
+    description="Get in touch for advertising opportunities, partnership inquiries, or support for your Nuru Massage venue listing in Istanbul. We're here to help grow your business."
+    canonical={canonicalUrl}
+>
+    <div class="contact-page">
+        <section class="contact-hero">
+            <div class="container">
+                <h1>Let's Talk Business</h1>
+                <p>Have questions about advertising your venue? We're here to help.</p>
+            </div>
+        </section>
+        
+        <section class="contact-content">
+            <div class="container">
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <h2>Get In Touch</h2>
+                        <p>ErotikMaps is an international network dedicated to listing your erotic massage parlor, gentlemen's club, sex club, or swinger club. We provide targeted and organic traffic to help your business grow.</p>
+                        <p>With Google My Business and social media often censoring adult content, our network serves as the best alternative to reach your audience effectively.</p>
+                        <p>Whether you want to list your venue, upgrade your plan, or have questions about our services, we'd love to hear from you.</p>
+                        
+                        <div class="contact-methods">
+                            <div class="contact-method">
+                                <span class="method-icon">📧</span>
+                                <div>
+                                    <strong>Email</strong>
+                                    <p><a href="mailto:office@erotikmaps.com">office@erotikmaps.com</a></p>
+                                </div>
+                            </div>
+                            <div class="contact-method">
+                                <span class="method-icon">💬</span>
+                                <div>
+                                    <strong>WhatsApp Business</strong>
+                                    <p><a href="https://wa.me/40732198525" target="_blank">+40 732 198 525</a></p>
+                                </div>
+                            </div>
+                            <div class="contact-method">
+                                <span class="method-icon">⏰</span>
+                                <div>
+                                    <strong>Response Time</strong>
+                                    <p>Within 24 hours</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="quick-links">
+                            <h3>Quick Links</h3>
+                            <ul>
+                                <li><a href="https://gopremium.app/create-listing">Create a Free Listing →</a></li>
+                                <li><a href="/advertise">View Advertising Options →</a></li>
+                                <li><a href="/">Browse All Listings →</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-cta-box">
+                        <h2>Ready to Get Started?</h2>
+                        <p>The fastest way to get your venue listed is to create a listing directly.</p>
+                        <a href="https://gopremium.app/create-listing" class="btn-primary-large">
+                            ✨ Create Free Listing
+                        </a>
+                        <p class="small-note">No credit card required • Approval in 24h</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</Base>
+
+<style>
+    .contact-hero {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 60px 0;
+        text-align: center;
+    }
+    .contact-hero h1 {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .contact-hero p {
+        opacity: 0.9;
+    }
+    
+    .contact-content {
+        padding: 60px 0;
+    }
+    .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 50px;
+        align-items: start;
+    }
+    @media (max-width: 768px) {
+        .contact-grid { grid-template-columns: 1fr; }
+    }
+    
+    .contact-info h2 {
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+    }
+    .contact-info > p {
+        color: var(--text-light);
+        line-height: 1.7;
+        margin-bottom: 30px;
+    }
+    
+    .contact-methods {
+        margin-bottom: 40px;
+    }
+    .contact-method {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+    .method-icon {
+        font-size: 1.5rem;
+    }
+    .contact-method strong {
+        display: block;
+        margin-bottom: 4px;
+    }
+    .contact-method p {
+        color: var(--text-light);
+        margin: 0;
+    }
+    
+    .quick-links h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+    }
+    .quick-links ul {
+        list-style: none;
+        padding: 0;
+    }
+    .quick-links li {
+        margin-bottom: 8px;
+    }
+    .quick-links a {
+        color: var(--primary);
+        font-weight: 500;
+    }
+    
+    .contact-cta-box {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    .contact-cta-box h2 {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+    }
+    .contact-cta-box > p {
+        color: var(--text-light);
+        margin-bottom: 24px;
+    }
+    .btn-primary-large {
+        display: inline-block;
+        padding: 16px 40px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 30px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    .btn-primary-large:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .small-note {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-top: 16px;
+    }
+</style>

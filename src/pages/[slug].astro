@@ -1,0 +1,1232 @@
+---
+import Base from '../layouts/Base.astro';
+import ListingCard from '../components/ListingCard.astro';
+import GeoBanner from '../components/GeoBanner.astro';
+import NetworkLinks from '../components/NetworkLinks.astro';
+
+export async function getStaticPaths() {
+    // Safe fetch helper defined inside getStaticPaths for Astro build context
+    async function safeFetch(url: string): Promise<any[]> {
+        try {
+            console.log('[getStaticPaths] Fetching:', url);
+            const res = await fetch(url, { 
+                headers: { 
+                    'Accept': 'application/json',
+                    'User-Agent': 'ErotikMaps-Satellite-Builder/1.0',
+                    'X-Satellite-Build': 'true'
+                } 
+            });
+            if (!res.ok) {
+                console.error('[getStaticPaths] API error: ' + res.status);
+                return [];
+            }
+            const ct = res.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) {
+                console.error('[getStaticPaths] Not JSON: ' + ct);
+                return [];
+            }
+            const data = await res.json();
+            return data.data || [];
+        } catch (e) {
+            console.error('[getStaticPaths] Fetch failed:', e);
+            return [];
+        }
+    }
+    
+    // Fetch city listings first (main category)
+    const cityApiUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=erotic-massage&limit=100';
+    let listings = await safeFetch(cityApiUrl);
+    
+    // Country fallback - MUST match homepage logic exactly (Gold + premium + 20 others sorted by ID)
+    if (listings.length === 0) {
+        console.log('[getStaticPaths] No city listings, trying country fallback...');
+        const countryApiUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?country=turkey&category=erotic-massage&limit=200';
+        const allCountryListings = await safeFetch(countryApiUrl);
+        
+        if (allCountryListings.length > 0) {
+            const goldOnes = allCountryListings.filter((l: any) => l.is_gold);
+            const premiumOnes = allCountryListings.filter((l: any) => l.is_premium && !l.is_gold);
+            const others = allCountryListings.filter((l: any) => !l.is_premium && !l.is_gold);
+            const selected = others.sort((a: any, b: any) => (a.id || 0) - (b.id || 0)).slice(0, 20);
+            listings = [...goldOnes, ...premiumOnes, ...selected];
+            console.log('[getStaticPaths] Country fallback: ' + listings.length + ' listings (gold: ' + goldOnes.length + ', premium: ' + premiumOnes.length + ')');
+        }
+    }
+    
+    // Also fetch cross-category listings (matching homepage related categories)
+    // This ensures pages exist for gentlemen's club / swinger club listings shown on the homepage
+    const relatedCats: Record<string, string[]> = {
+        'erotic-massage': ['gentlemens-club', 'swinger-club'],
+        'gentlemens-club': ['erotic-massage', 'swinger-club'],
+        'swinger-club': ['erotic-massage', 'gentlemens-club'],
+        'sugar-baby': ['erotic-massage', 'gentlemens-club', 'swinger-club'],
+        'gfe': ['erotic-massage', 'gentlemens-club', 'swinger-club']
+    };
+    const currentRelated = relatedCats['erotic-massage'] || [];
+    
+    for (const relCat of currentRelated) {
+        // Try city first, then country fallback
+        let relUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?city=istanbul&category=' + relCat + '&limit=6';
+        let relData = await safeFetch(relUrl);
+        
+        if (relData.length === 0) {
+            relUrl = 'https://www.erotikmaps.com/api/v1/satellite/listings?country=turkey&category=' + relCat + '&limit=6';
+            relData = await safeFetch(relUrl);
+        }
+        
+        if (relData.length > 0) {
+            listings = [...listings, ...relData.slice(0, 6)];
+            console.log('[getStaticPaths] Added ' + Math.min(relData.length, 6) + ' cross-category listings for ' + relCat);
+        }
+    }
+    
+    // Deduplicate by slug (in case a listing appears in multiple categories)
+    const seen = new Set<string>();
+    listings = listings.filter((l: any) => {
+        if (!l || !l.slug || seen.has(l.slug)) return false;
+        seen.add(l.slug);
+        return true;
+    });
+    
+    if (listings.length === 0) {
+        console.warn('[getStaticPaths] No listings found in city or country, returning empty paths');
+        return [];
+    }
+    
+    // Filter out any listings without valid slugs
+    const validListings = listings.filter((l: any) => l && l.slug && typeof l.slug === 'string' && l.slug.length > 0);
+    
+    if (validListings.length === 0) {
+        console.warn('[getStaticPaths] No valid listings after filtering');
+        return [];
+    }
+    
+    return validListings.map((listing: any, index: number) => ({
+        params: { slug: listing.slug },
+        props: { 
+            listing,
+            allListings: validListings,
+            position: index + 1,
+            total: validListings.length
+        }
+    }));
+}
+
+const { listing, allListings, position, total } = Astro.props;
+const canonicalUrl = `https://nurumassageistanbul.top/${listing.slug}`;
+
+// Fetch full listing details with error handling
+let fullListing = listing;
+try {
+    const detailUrl = `https://www.erotikmaps.com/api/v1/satellite/listing/${listing.slug}`;
+    console.log('[listing] Fetching details:', detailUrl);
+    const response = await fetch(detailUrl, { headers: { 'Accept': 'application/json' } });
+    if (response.ok) {
+        const ct = response.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+            const data = await response.json();
+            if (data.success && data.data) {
+                fullListing = { ...listing, ...data.data };
+            }
+        }
+    }
+} catch (error) {
+    console.error('[listing] Failed to fetch details:', error);
+    // Continue with basic listing data
+}
+
+// Get similar listings (excluding current)
+const similarListings = allListings
+    .filter((l: any) => l.slug !== listing.slug)
+    .slice(0, 4);
+
+// Get prev/next for navigation
+const prevListing = position > 1 ? allListings[position - 2] : null;
+const nextListing = position < total ? allListings[position] : null;
+
+// Generate meta description with unique content
+const metaDesc = fullListing.description 
+    ? fullListing.description.replace(/<[^>]*>/g, '').substring(0, 155) + '...'
+    : `Discover ${listing.name}, one of the top Nuru Massage venues in Istanbul. Contact info, photos, services & reviews.`;
+---
+
+<Base 
+    title={`${listing.name} - Nuru Massage in Istanbul | Istanbul Nuru Massage`}
+    description={metaDesc}
+    canonical={canonicalUrl}
+    image={listing.thumbnail}
+    type="business.business"
+>
+    <article class="listing-detail" itemscope itemtype="https://schema.org/LocalBusiness">
+        <div class="container">
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
+                <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a href="/" itemprop="item"><span itemprop="name">Home</span></a>
+                    <meta itemprop="position" content="1" />
+                </span>
+                &rsaquo;
+                <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <a href="/#all-listings" itemprop="item"><span itemprop="name">Nuru Massage</span></a>
+                    <meta itemprop="position" content="2" />
+                </span>
+                &rsaquo;
+                <span itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                    <span itemprop="name">{listing.name}</span>
+                    <meta itemprop="position" content="3" />
+                </span>
+            </nav>
+            
+            <!-- Hero Banner - Full width modern design -->
+            <header class="listing-hero-banner">
+                <div class="hero-image-container">
+                    <img 
+                        src={listing.thumbnail} 
+                        alt={`${listing.name} - Professional Nuru Massage venue in Istanbul, Turkey. ${listing.is_gold ? 'Gold verified establishment.' : listing.is_premium ? 'Silver verified listing.' : 'Quality adult wellness services.'}`}
+                        class="hero-bg-image"
+                        loading="eager"
+                        itemprop="image"
+                    />
+                    <div class="hero-overlay"></div>
+                </div>
+                <div class="hero-content">
+                    <div class="hero-badges">
+                        {listing.is_gold && <span class="hero-badge gold"><span class="badge-icon">🏆</span> Gold Verified</span>}
+                        {listing.is_premium && !listing.is_gold && <span class="hero-badge premium"><span class="badge-icon">⭐</span> Silver</span>}
+                    </div>
+                    <h1 itemprop="name">{listing.name}</h1>
+                    <p class="hero-location" itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+                        <span class="location-icon">📍</span>
+                        <span itemprop="addressLocality">{listing.city}</span>, 
+                        <span itemprop="addressCountry">{listing.country}</span>
+                    </p>
+                    {fullListing.updated_at && (
+                        <p class="listing-last-updated">
+                            <time datetime={fullListing.updated_at} itemprop="dateModified">
+                                Updated {new Date(fullListing.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                            </time>
+                        </p>
+                    )}
+                </div>
+            </header>
+            
+            <!-- GeoBanner - Top position for non-Gold/Silver -->
+            {!listing.is_gold && !listing.is_premium && (
+                <div class="listing-banner-slot top-banner">
+                    <GeoBanner />
+                </div>
+            )}
+            
+            <!-- QUICK CONTACT SECTION - Very prominent, mobile-first -->
+            <section class="quick-contact-section">
+                <h2 class="quick-contact-title">📞 Contact {listing.name}</h2>
+                
+                <div class="quick-contact-grid">
+                    <!-- Website Button - Green -->
+                    {fullListing.website && (
+                        <a 
+                            href={fullListing.website} 
+                            target="_blank" 
+                            rel={(listing.is_gold || listing.is_premium) ? "noopener" : "nofollow noopener"}
+                            class="quick-btn website-main"
+                        >
+                            <span class="btn-label">🌐 Website</span>
+                        </a>
+                    )}
+                    
+                    <!-- WhatsApp Button - Green -->
+                    {fullListing.whatsapp && (
+                        <a 
+                            href={`https://wa.me/${fullListing.whatsapp.replace(/[^0-9]/g, '')}?text=Hi! I found you on Istanbul Nuru Massage and I'm interested in your services.`}
+                            target="_blank"
+                            rel="noopener"
+                            class="quick-btn whatsapp-main"
+                        >
+                            <span class="btn-icon">💬</span>
+                            <span class="btn-content">
+                                <span class="btn-label">WhatsApp</span>
+                                <span class="btn-number">{fullListing.whatsapp}</span>
+                            </span>
+                        </a>
+                    )}
+                    
+                    <!-- Phone Button - Outlined -->
+                    {fullListing.phone && (
+                        <div class="contact-info-box phone-box">
+                            <span class="info-label">📞 Phone Number</span>
+                            <span class="info-value" itemprop="telephone">{fullListing.phone}</span>
+                            <a href={`tel:${fullListing.phone}`} class="quick-btn call-btn">
+                                📞 Call Us
+                            </a>
+                        </div>
+                    )}
+                    
+                    <!-- Email -->
+                    {fullListing.email && (
+                        <div class="contact-info-box email-box">
+                            <span class="info-label">✉️ Email Address</span>
+                            <span class="info-value" itemprop="email">{fullListing.email}</span>
+                            <a href={`mailto:${fullListing.email}`} class="quick-btn email-btn-action">
+                                ✉️ Email
+                            </a>
+                        </div>
+                    )}
+                    
+                    <!-- Address / Get Directions -->
+                    {fullListing.address && (
+                        <div class="contact-info-box address-box">
+                            <span class="info-label">📍 Get Directions</span>
+                            <span class="info-value" itemprop="streetAddress">{fullListing.address}</span>
+                            <a 
+                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullListing.address + ', ' + listing.city + ', ' + listing.country)}`}
+                                target="_blank"
+                                rel="noopener"
+                                class="quick-btn directions-btn"
+                            >
+                                📍 Get Directions
+                            </a>
+                        </div>
+                    )}
+                </div>
+                
+                <!-- CTA Banner -->
+                <div class="contact-cta-banner">
+                    <span>👑 Claim this listing & edit all details</span>
+                    <a href="https://gopremium.app/create-listing" rel="nofollow" class="claim-btn">Claim Listing</a>
+                </div>
+            </section>
+            
+            <!-- Prev/Next Navigation -->
+            <nav class="listing-nav">
+                {prevListing && (
+                    <a href={`/${prevListing.slug}`} class="nav-prev">
+                        &larr; Previous: {prevListing.name}
+                    </a>
+                )}
+                {!prevListing && <span></span>}
+                {nextListing && (
+                    <a href={`/${nextListing.slug}`} class="nav-next">
+                        Next: {nextListing.name} &rarr;
+                    </a>
+                )}
+            </nav>
+            
+            <!-- Content -->
+            <div class="listing-content">
+                <div class="main-content">
+                    <!-- About Section -->
+                    {fullListing.description && (
+                        <section class="section">
+                            <h2>About {listing.name}</h2>
+                            <div itemprop="description" set:html={fullListing.description}></div>
+                        </section>
+                    )}
+                    
+                    <!-- Services Section (if available) -->
+                    {fullListing.services && fullListing.services.length > 0 && (
+                        <section class="section">
+                            <h2>Services Offered</h2>
+                            <ul class="services-list">
+                                {fullListing.services.map((service: string) => (
+                                    <li>{service}</li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+                    
+                    <!-- Gallery - Organized Grid -->
+                    {fullListing.gallery && fullListing.gallery.length > 0 && (
+                        <section class="section gallery-section">
+                            <h2><span class="heading-icon" aria-hidden="true">📸</span> Photo & Video Gallery</h2>
+                            <p class="gallery-intro">{fullListing.gallery.length} media items from {listing.name}</p>
+                            <div class="gallery-grid" id="gallery-grid">
+                                {fullListing.gallery.slice(0, 12).map((item: any, idx: number) => (
+                                    <div class={`gallery-item ${idx === 0 ? 'featured' : ''}`} key={idx} onclick={`openLightbox(${idx})`}>
+                                        {item.type === 'image' ? (
+                                            <img 
+                                                src={item.url} 
+                                                alt={`${listing.name} - Nuru Massage in Istanbul, Turkey - Photo ${idx + 1}`}
+                                                loading="lazy"
+                                                class="gallery-media"
+                                            />
+                                        ) : (
+                                            <div class="video-wrapper">
+                                                <video 
+                                                    src={item.url} 
+                                                    preload="metadata"
+                                                    class="gallery-media"
+                                                ></video>
+                                                <span class="video-badge">▶ Video</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            {fullListing.gallery.length > 12 && (
+                                <p class="gallery-more">+ {fullListing.gallery.length - 12} more photos available</p>
+                            )}
+                            
+                            <!-- Lightbox -->
+                            <div id="lightbox" class="lightbox">
+                                <span class="close-btn" onclick="closeLightbox()">&times;</span>
+                                <img id="lightbox-img" class="lightbox-content" src="" />
+                                <video id="lightbox-video" class="lightbox-content" controls style="display:none;"></video>
+                                <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
+                                <a class="next" onclick="changeSlide(1)">&#10095;</a>
+                            </div>
+
+                            <script define:vars={{ gallery: fullListing.gallery }}>
+                                let currentIndex = 0;
+                                const lightbox = document.getElementById('lightbox');
+                                const lightboxImg = document.getElementById('lightbox-img');
+                                const lightboxVideo = document.getElementById('lightbox-video');
+                                
+                                window.openLightbox = function(index) {
+                                    currentIndex = index;
+                                    lightbox.style.display = "block";
+                                    showSlide(currentIndex);
+                                    document.body.style.overflow = 'hidden';
+                                }
+                                
+                                window.closeLightbox = function() {
+                                    lightbox.style.display = "none";
+                                    lightboxVideo.pause();
+                                    document.body.style.overflow = 'auto';
+                                }
+                                
+                                window.changeSlide = function(n) {
+                                    currentIndex += n;
+                                    if (currentIndex >= gallery.length) currentIndex = 0;
+                                    if (currentIndex < 0) currentIndex = gallery.length - 1;
+                                    showSlide(currentIndex);
+                                }
+                                
+                                function showSlide(index) {
+                                    const item = gallery[index];
+                                    if (item.type === 'image') {
+                                        lightboxImg.style.display = 'block';
+                                        lightboxVideo.style.display = 'none';
+                                        lightboxImg.src = item.url;
+                                        lightboxVideo.pause();
+                                    } else {
+                                        lightboxImg.style.display = 'none';
+                                        lightboxVideo.style.display = 'block';
+                                        lightboxVideo.src = item.url;
+                                    }
+                                }
+                                
+                                // Close on outside click
+                                lightbox.addEventListener('click', function(e) {
+                                    if (e.target === lightbox) {
+                                        closeLightbox();
+                                    }
+                                });
+                                
+                                // Keyboard navigation
+                                document.addEventListener('keydown', function(e) {
+                                    if (lightbox.style.display === "block") {
+                                        if (e.key === "Escape") closeLightbox();
+                                        if (e.key === "ArrowLeft") changeSlide(-1);
+                                        if (e.key === "ArrowRight") changeSlide(1);
+                                    }
+                                });
+                            </script>
+                        </section>
+                    )}
+                    
+                    <!-- GeoBanner for non-Gold/Silver listings - After Gallery -->
+                    {!listing.is_gold && !listing.is_premium && (
+                        <div class="listing-banner-slot">
+                            <GeoBanner />
+                        </div>
+                    )}
+                    
+                    <!-- Why Choose Section - Unique SEO content -->
+                    <section class="section why-choose">
+                        <h2>Why Choose {listing.name}?</h2>
+                        <p>
+                            Looking for quality Nuru Massage services in Istanbul? 
+                            {listing.name} is one of the {total} verified establishments we feature in the Istanbul area.
+                            {listing.is_premium ? " As a Silver listing, this place has been verified for quality and reliability." : ""}
+                            {listing.is_gold ? " This Gold-rated venue is among the highest-rated in Istanbul." : ""}
+                        </p>
+                        <ul>
+                            <li>✓ Verified Nuru Massage establishment</li>
+                            <li>✓ Located in Istanbul, Turkey</li>
+                            <li>✓ Direct contact information available</li>
+                            {fullListing.gallery && fullListing.gallery.length > 0 && (
+                                <li>✓ {fullListing.gallery.length} photos & videos available</li>
+                            )}
+                            {fullListing.services && fullListing.services.length > 0 && (
+                                <li>✓ {fullListing.services.length} services offered</li>
+                            )}
+                        </ul>
+                    </section>
+                    
+                    <!-- Unique Local SEO Content -->
+                    <section class="section local-seo-content">
+                        <h2>Nuru Massage Experience in Istanbul</h2>
+                        <p>
+                            {listing.name} offers authentic Nuru Massage experiences in the heart of Istanbul, Turkey. 
+                            Whether you're a local resident or visiting Istanbul for business or leisure, 
+                            this venue provides professional services in a comfortable, discreet environment.
+                        </p>
+                        <p>
+                            As listing #{position} of {total} in our Istanbul directory, {listing.name} has been 
+                            {listing.is_gold ? "awarded our Gold verification for exceptional service quality" : 
+                             listing.is_premium ? "verified as a Silver establishment" : 
+                             "verified and added to our curated selection of Nuru Massage venues"}.
+                        </p>
+                        <h3>What to Expect</h3>
+                        <p>
+                            When visiting {listing.name}, you can expect professional Nuru Massage services 
+                            tailored to your preferences. The venue is committed to providing a relaxing and 
+                            satisfying experience for all clients. Contact them directly using the information 
+                            provided to inquire about availability, pricing, and specific services.
+                        </p>
+                        <h3>Location & Accessibility</h3>
+                        <p>
+                            Conveniently located in Istanbul, {listing.name} is accessible to visitors 
+                            from all areas of the city. For the exact address and directions, please contact 
+                            the venue directly or use the location information provided above.
+                        </p>
+                    </section>
+                </div>
+                
+                <aside class="sidebar">
+                    <!-- Contact Card - Prominently displayed -->
+                    <div class="contact-card-premium">
+                        <div class="contact-header">
+                            <h3><span class="heading-icon" aria-hidden="true">📞</span> Contact {listing.name}</h3>
+                            <p class="contact-subtitle">Get in touch directly</p>
+                        </div>
+                        
+                        <!-- WhatsApp CTA - Most prominent -->
+                        {fullListing.whatsapp && (
+                            <a 
+                                href={`https://wa.me/${fullListing.whatsapp.replace(/[^0-9]/g, '')}?text=Hi! I found you on the Nuru Massage directory and I'm interested in your services.`}
+                                class="whatsapp-cta"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                <span class="wa-icon">💬</span>
+                                <span class="wa-text">
+                                    <strong>Chat on WhatsApp</strong>
+                                    <small>Tap to message instantly</small>
+                                </span>
+                            </a>
+                        )}
+                        
+                        <!-- Phone Call Button -->
+                        {fullListing.phone && (
+                            <a href={`tel:${fullListing.phone}`} class="contact-btn phone-btn" itemprop="telephone">
+                                <span class="contact-icon">📞</span>
+                                <span>{fullListing.phone}</span>
+                            </a>
+                        )}
+                        
+                        <!-- Email -->
+                        {fullListing.email && (
+                            <a href={`mailto:${fullListing.email}`} class="contact-btn email-btn" itemprop="email">
+                                <span class="contact-icon">✉️</span>
+                                <span>{fullListing.email}</span>
+                            </a>
+                        )}
+                        
+                        <!-- Website - nofollow unless Gold/Silver -->
+                        {fullListing.website && (
+                            <a 
+                                href={fullListing.website} 
+                                target="_blank" 
+                                rel={(listing.is_gold || listing.is_premium) ? "noopener" : "nofollow noopener"}
+                                class="contact-btn website-btn" 
+                                itemprop="url"
+                            >
+                                <span class="contact-icon">🌐</span>
+                                <span>Visit Website</span>
+                                {(listing.is_gold || listing.is_premium) && <span class="dofollow-badge">✓ Verified</span>}
+                            </a>
+                        )}
+                        
+                        <!-- Location -->
+                        {fullListing.address && (
+                            <div class="contact-location">
+                                <h4>📍 Location</h4>
+                                <p itemprop="streetAddress">{fullListing.address}</p>
+                                <p class="city-info">{listing.city}, {listing.country}</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <!-- View on ErotikMaps -->
+                    <div class="view-original">
+                        <a href={listing.url} target="_blank" class="btn-erotikmaps">
+                            View Full Profile on ErotikMaps →
+                        </a>
+                    </div>
+                    
+                    <!-- Quick Links -->
+                    <div class="quick-links">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="/">← All Nuru Massage in Istanbul</a></li>
+                            <li><a href="/#faq">Frequently Asked Questions</a></li>
+                            <li><a href="/#premium">Silver Listings</a></li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+            
+            <!-- GeoBanner for non-Gold/Silver listings - Before Similar Listings -->
+            {!listing.is_gold && !listing.is_premium && (
+                <div class="listing-banner-slot bottom-banner">
+                    <GeoBanner />
+                </div>
+            )}
+            
+            <!-- Similar Listings -->
+            {similarListings.length > 0 && (
+                <section class="similar-listings">
+                    <h2>Similar Nuru Massage in Istanbul</h2>
+                    <p>Discover other venues that might interest you:</p>
+                    <div class="listings-grid small">
+                        {similarListings.map((l: any) => (
+                            <ListingCard listing={l} />
+                        ))}
+                    </div>
+                    <p class="view-all">
+                        <a href="/" class="btn-secondary">View All {total} Listings →</a>
+                    </p>
+                </section>
+            )}
+            
+            <!-- FAQ Section - Visible for SEO -->
+            <section class="listing-faq" id="listing-faq" itemscope itemtype="https://schema.org/FAQPage">
+                <h2><span class="heading-icon" aria-hidden="true">❓</span> Frequently Asked Questions about {listing.name}</h2>
+                
+                <div class="faq-accordion">
+                    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                        <summary itemprop="name">
+                            What services does {listing.name} offer?
+                        </summary>
+                        <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                            <div itemprop="text">
+                                {fullListing.services && fullListing.services.length > 0 ? (
+                                    <p>
+                                        {listing.name} offers the following Nuru Massage services: 
+                                        <strong>{fullListing.services.join(', ')}</strong>. 
+                                        Located in Istanbul, Turkey, this venue provides professional adult wellness and relaxation experiences.
+                                    </p>
+                                ) : (
+                                    <p>
+                                        {listing.name} provides professional Nuru Massage services in Istanbul, Turkey. 
+                                        Contact them directly for a full list of available services and treatments.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                        <summary itemprop="name">
+                            How can I contact {listing.name}?
+                        </summary>
+                        <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                            <div itemprop="text">
+                                <p>You can contact {listing.name} through the following methods:</p>
+                                <ul>
+                                    {fullListing.whatsapp && <li>💬 <strong>WhatsApp:</strong> {fullListing.whatsapp}</li>}
+                                    {fullListing.phone && <li>📞 <strong>Phone:</strong> {fullListing.phone}</li>}
+                                    {fullListing.email && <li>✉️ <strong>Email:</strong> {fullListing.email}</li>}
+                                    {fullListing.website && <li>🌐 <strong>Website:</strong> <a href={fullListing.website} target="_blank" rel="noopener">{fullListing.website}</a></li>}
+                                </ul>
+                            </div>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                        <summary itemprop="name">
+                            Where is {listing.name} located?
+                        </summary>
+                        <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                            <div itemprop="text">
+                                {fullListing.address ? (
+                                    <p>
+                                        📍 {listing.name} is located at <strong>{fullListing.address}</strong>, Istanbul, Turkey. 
+                                        You can <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullListing.address + ', Istanbul, Turkey')}`} target="_blank" rel="noopener">get directions on Google Maps</a>.
+                                    </p>
+                                ) : (
+                                    <p>
+                                        📍 {listing.name} is located in Istanbul, Turkey. 
+                                        Contact them directly for the exact address and directions.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                        <summary itemprop="name">
+                            Is {listing.name} a verified venue?
+                        </summary>
+                        <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                            <div itemprop="text">
+                                {listing.is_gold ? (
+                                    <p>
+                                        ✅ <strong>Yes!</strong> {listing.name} is a <span class="badge gold">🏆 Gold Verified</span> venue on our directory. 
+                                        Gold venues have been verified for quality, reliability, and excellent service. 
+                                        This is one of the top-rated Nuru Massage venues in Istanbul.
+                                    </p>
+                                ) : listing.is_premium ? (
+                                    <p>
+                                        ✅ <strong>Yes!</strong> {listing.name} is a <span class="badge premium">⭐ Silver Verified</span> listing. 
+                                        Silver listings have been reviewed and meet our quality standards for Nuru Massage services in Istanbul.
+                                    </p>
+                                ) : (
+                                    <p>
+                                        {listing.name} is listed in our Nuru Massage directory for Istanbul. 
+                                        We recommend contacting them directly to verify services and availability.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+                        <summary itemprop="name">
+                            What are the opening hours of {listing.name}?
+                        </summary>
+                        <div class="faq-answer" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                            <div itemprop="text">
+                                {fullListing.opening_hours ? (
+                                    <p>
+                                        🕐 {listing.name} is typically open according to their schedule. 
+                                        For the most accurate opening hours, please contact them directly via WhatsApp or phone, 
+                                        as hours may vary on holidays or special occasions.
+                                    </p>
+                                ) : (
+                                    <p>
+                                        🕐 For current opening hours at {listing.name}, please contact them directly. 
+                                        Many Nuru Massage venues in Istanbul operate from late morning until late evening.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </details>
+                </div>
+                
+                <p class="faq-more">
+                    Have more questions? <a href="/#faq">See our general FAQ</a> or contact {listing.name} directly.
+                </p>
+            </section>
+        </div>
+    </article>
+    
+    <!-- Schema.org LocalBusiness - ENRICHED -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": ["LocalBusiness", "HealthAndBeautyBusiness"],
+        "@id": canonicalUrl,
+        "name": listing.name,
+        "description": fullListing.description ? fullListing.description.replace(/<[^>]*>/g, '').substring(0, 300) : `Professional Nuru Massage venue located in Istanbul, Turkey. Offering quality adult wellness and relaxation services.`,
+        "url": canonicalUrl,
+        "image": fullListing.gallery && fullListing.gallery.length > 0 
+            ? [listing.thumbnail, ...fullListing.gallery.slice(0, 5).map((g: any) => g.url)]
+            : [listing.thumbnail],
+        "logo": listing.thumbnail,
+        "telephone": fullListing.phone || undefined,
+        "email": fullListing.email || undefined,
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": fullListing.address || undefined,
+            "addressLocality": "Istanbul",
+            "addressRegion": "Turkey",
+            "addressCountry": "Turkey"
+        },
+        "geo": (fullListing.latitude && fullListing.longitude) ? {
+            "@type": "GeoCoordinates",
+            "latitude": fullListing.latitude,
+            "longitude": fullListing.longitude
+        } : undefined,
+        "hasMap": fullListing.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullListing.address + ', Istanbul, Turkey')}` : undefined,
+        "priceRange": fullListing.price_range || "$$",
+        "paymentAccepted": ["Cash", "Credit Card"],
+        "currenciesAccepted": "EUR, USD, GBP",
+        "areaServed": {
+            "@type": "City",
+            "name": "Istanbul",
+            "containedInPlace": {
+                "@type": "Country",
+                "name": "Turkey"
+            }
+        },
+        "aggregateRating": (fullListing.rating && fullListing.rating > 0) ? {
+            "@type": "AggregateRating",
+            "ratingValue": fullListing.rating,
+            "reviewCount": fullListing.review_count || 1,
+            "bestRating": 5,
+            "worstRating": 1
+        } : undefined,
+        "hasOfferCatalog": (fullListing.services && fullListing.services.length > 0) ? {
+            "@type": "OfferCatalog",
+            "name": "Nuru Massage Services",
+            "itemListElement": fullListing.services.map((service: string, idx: number) => ({
+                "@type": "Offer",
+                "itemOffered": {
+                    "@type": "Service",
+                    "name": service,
+                    "description": `Professional ${service} service at ${listing.name} in Istanbul`
+                }
+            }))
+        } : undefined,
+        "openingHoursSpecification": fullListing.opening_hours ? [{
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+            "opens": "10:00",
+            "closes": "23:00"
+        }] : undefined,
+        "isAccessibleForFree": false,
+        "sameAs": [
+            fullListing.website,
+            fullListing.instagram,
+            fullListing.facebook
+        ].filter(Boolean),
+        "potentialAction": [
+            fullListing.phone ? {
+                "@type": "ReserveAction",
+                "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": `tel:${fullListing.phone}`,
+                    "actionPlatform": ["http://schema.org/IOSPlatform", "http://schema.org/AndroidPlatform"]
+                },
+                "result": {
+                    "@type": "Reservation",
+                    "name": "Book Appointment"
+                }
+            } : undefined,
+            fullListing.whatsapp ? {
+                "@type": "CommunicateAction",
+                "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": `https://wa.me/${fullListing.whatsapp.replace(/[^0-9]/g, '')}`,
+                    "actionPlatform": ["http://schema.org/IOSPlatform", "http://schema.org/AndroidPlatform", "http://schema.org/DesktopWebPlatform"]
+                },
+                "description": "Contact via WhatsApp"
+            } : undefined
+        ].filter(Boolean),
+        "knowsAbout": ["Erotic Massage", "Adult Wellness", "Relaxation Services", "Professional Massage", "Istanbul Massage"],
+        "slogan": listing.is_gold 
+            ? "Gold Verified Venue" 
+            : listing.is_premium 
+                ? "Silver Verified Venue" 
+                : "Quality Nuru Massage Services"
+    })}></script>
+    
+    <!-- Schema.org FAQPage - Dynamic FAQ for this listing -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": `What services does ${listing.name} offer in Istanbul?`,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": fullListing.services && fullListing.services.length > 0
+                        ? `${listing.name} offers the following Nuru Massage services: ${fullListing.services.join(', ')}. Located in Istanbul, Turkey, this venue provides professional adult wellness and relaxation experiences.`
+                        : `${listing.name} provides professional Nuru Massage services in Istanbul, Turkey. Contact them directly for a full list of available services and treatments.`
+                }
+            },
+            {
+                "@type": "Question",
+                "name": `How can I contact ${listing.name}?`,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": [
+                        fullListing.whatsapp ? `WhatsApp: ${fullListing.whatsapp}` : null,
+                        fullListing.phone ? `Phone: ${fullListing.phone}` : null,
+                        fullListing.email ? `Email: ${fullListing.email}` : null,
+                        fullListing.website ? `Website: ${fullListing.website}` : null
+                    ].filter(Boolean).join('. ') || `Visit our listing page for the latest contact information for ${listing.name} in Istanbul.`
+                }
+            },
+            {
+                "@type": "Question",
+                "name": `Where is ${listing.name} located?`,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": fullListing.address 
+                        ? `${listing.name} is located at ${fullListing.address}, Istanbul, Turkey. You can get directions using Google Maps or contact them directly for more details.`
+                        : `${listing.name} is located in Istanbul, Turkey. Contact them directly for the exact address and directions.`
+                }
+            },
+            {
+                "@type": "Question",
+                "name": `Is ${listing.name} a verified venue?`,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": listing.is_gold 
+                        ? `Yes, ${listing.name} is a Gold Verified venue on our directory. Gold venues have been verified for quality, reliability, and excellent service. This is one of the top-rated Nuru Massage venues in Istanbul.`
+                        : listing.is_premium
+                            ? `Yes, ${listing.name} is a Silver Verified listing. Silver listings have been reviewed and meet our quality standards for Nuru Massage services in Istanbul.`
+                            : `${listing.name} is listed in our Nuru Massage directory for Istanbul. We recommend contacting them directly to verify services and availability.`
+                }
+            },
+            {
+                "@type": "Question",
+                "name": `What are the prices at ${listing.name}?`,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": fullListing.price_range 
+                        ? `Prices at ${listing.name} typically range from ${fullListing.price_range}. For exact pricing and available packages, we recommend contacting the venue directly.`
+                        : `For current pricing information at ${listing.name}, please contact them directly via phone or WhatsApp. Prices may vary based on services and duration.`
+                }
+            }
+        ]
+    })}></script>
+    
+    <!-- Schema.org WebPage with enhanced breadcrumbs -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": `${listing.name} - Nuru Massage in Istanbul`,
+        "url": canonicalUrl,
+        "datePublished": fullListing.created_at || new Date().toISOString(),
+        "dateModified": fullListing.updated_at || new Date().toISOString(),
+        "description": fullListing.description ? fullListing.description.replace(/<[^>]*>/g, '').substring(0, 160) : `Discover ${listing.name}, professional Nuru Massage venue in Istanbul.`,
+        "inLanguage": "en",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "Istanbul Nuru Massage",
+            "url": "https://nurumassageistanbul.top"
+        },
+        "about": {
+            "@type": "LocalBusiness",
+            "@id": canonicalUrl
+        },
+        "breadcrumb": {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": "https://nurumassageistanbul.top"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Turkey",
+                    "item": "https://nurumassageistanbul.top/#country"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": "Istanbul",
+                    "item": "https://nurumassageistanbul.top/"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 4,
+                    "name": "Nuru Massage",
+                    "item": "https://nurumassageistanbul.top/#all-listings"
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 5,
+                    "name": listing.name,
+                    "item": canonicalUrl
+                }
+            ]
+        },
+        "speakable": {
+            "@type": "SpeakableSpecification",
+            "cssSelector": [".listing-header h1", ".listing-header-content"]
+        }
+    })}></script>
+    
+    <!-- Sticky Footer - Contact CTAs (WhatsApp & Call only) -->
+    {(fullListing.whatsapp || fullListing.phone) && (
+        <div class="sticky-contact-bar">
+            {fullListing.whatsapp && (
+                <a 
+                    href={`https://wa.me/${fullListing.whatsapp.replace(/[^0-9]/g, '')}?text=Hi! I found you on the Nuru Massage directory.`}
+                    class="sticky-btn whatsapp"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <span class="sticky-icon">💬</span>
+                    <span>WhatsApp</span>
+                </a>
+            )}
+            {fullListing.phone && (
+                <a href={`tel:${fullListing.phone}`} class="sticky-btn call">
+                    <span class="sticky-icon">📞</span>
+                    <span>Call</span>
+                </a>
+            )}
+        </div>
+    )}
+    
+    <!-- Network Links - Cross-site SEO links to other satellite sites -->
+    <NetworkLinks currentCity="Istanbul" currentCountry="Turkey" category="erotic-massage" />
+
+</Base>
+
+<style>
+    /* Sticky Contact Bar */
+    .sticky-contact-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        background: white;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        z-index: 999;
+        padding: 10px;
+        gap: 8px;
+    }
+    .sticky-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .sticky-btn svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    .sticky-btn.whatsapp {
+        background: #25D366;
+        color: white;
+    }
+    .sticky-btn.whatsapp:hover {
+        background: #128C7E;
+    }
+    .sticky-btn.call {
+        background: #2563eb;
+        color: white;
+    }
+    .sticky-btn.call:hover {
+        background: #1d4ed8;
+    }
+    .sticky-btn.add-listing {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+    }
+    .sticky-btn.add-listing:hover {
+        transform: scale(1.02);
+    }
+    
+    /* Add padding at bottom so content doesn't get hidden */
+    .listing-detail {
+        padding-bottom: 100px;
+    }
+    
+    /* Sticky icon always visible */
+    .sticky-icon {
+        font-size: 1.3rem;
+        line-height: 1;
+    }
+    
+    @media (max-width: 500px) {
+        .sticky-btn span:not(.sticky-icon) {
+            display: none;
+        }
+        .sticky-btn {
+            padding: 14px 20px;
+        }
+        .sticky-icon {
+            font-size: 1.5rem;
+        }
+    }
+    
+    .listing-position {
+        font-size: 13px;
+        color: var(--text-light);
+        margin-top: 10px;
+    }
+    .listing-nav {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        margin: 15px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+    }
+    .listing-nav a {
+        font-size: 14px;
+    }
+    .nav-prev { color: var(--text-light); }
+    .nav-next { color: var(--primary); }
+    .services-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        list-style: none;
+        padding: 0;
+    }
+    .services-list li {
+        background: var(--bg);
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    .why-choose ul {
+        list-style: none;
+        padding: 0;
+        margin-top: 15px;
+    }
+    .why-choose li {
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .quick-links {
+        background: var(--bg);
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+    .quick-links h4 {
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+    .quick-links ul {
+        list-style: none;
+        padding: 0;
+    }
+    .quick-links li {
+        margin-bottom: 10px;
+    }
+    .quick-links a {
+        font-size: 13px;
+        color: var(--text-light);
+    }
+    .quick-links a:hover {
+        color: var(--primary);
+    }
+    .similar-listings {
+        margin-top: 50px;
+        padding-top: 40px;
+        border-top: 2px solid var(--border);
+    }
+    .similar-listings h2 {
+        margin-bottom: 10px;
+    }
+    .similar-listings > p {
+        color: var(--text-light);
+        margin-bottom: 25px;
+    }
+    .listings-grid.small {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    .view-all {
+        text-align: center;
+        margin-top: 30px;
+    }
+    .btn-secondary {
+        display: inline-block;
+        padding: 12px 30px;
+        background: var(--bg);
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: 8px;
+        font-weight: 600;
+    }
+    
+    /* GeoBanner slots for non-premium listings */
+    .listing-banner-slot {
+        margin: 16px 0;
+        text-align: center;
+    }
+    .listing-banner-slot.top-banner {
+        margin: 12px 0 16px 0;
+        padding: 0;
+        background: transparent;
+    }
+    .listing-banner-slot.bottom-banner {
+        margin: 24px auto;
+        max-width: 728px;
+    }
+    
+    <!-- Mobile Sticky Footer for Listings -->
+    {fullListing.whatsapp || fullListing.phone ? (
+        <div class="mobile-sticky-footer">
+            {fullListing.whatsapp && (
+                <a 
+                    href={`https://wa.me/${fullListing.whatsapp.replace(/[^0-9]/g, '')}?text=Hi! I found you on the Nuru Massage directory.`}
+                    class="sticky-btn sticky-whatsapp"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <span class="icon">💬</span> WhatsApp
+                </a>
+            )}
+            {fullListing.phone && (
+                <a href={`tel:${fullListing.phone}`} class="sticky-btn sticky-phone">
+                    <span class="icon">📞</span> Call
+                </a>
+            )}
+        </div>
+    ) : null}
+</Base>
+
+<style>
+    /* ... existing styles ... */
+    
+    /* Mobile Sticky Footer */
+    .mobile-sticky-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        padding: 12px;
+        display: none; /* Hidden by default */
+        z-index: 999;
+        gap: 12px;
+    }
+
+    .sticky-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .sticky-whatsapp {
+        background: #25D366;
+    }
+
+    .sticky-phone {
+        background: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+        .mobile-sticky-footer {
+            display: flex;
+        }
+        
+        /* Add padding to body so footer doesn't cover content */
+        body {
+            padding-bottom: 70px;
+        }
+    }
+</style>

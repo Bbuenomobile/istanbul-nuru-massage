@@ -1,0 +1,562 @@
+---
+export interface Props {
+    listing: {
+        name: string;
+        slug: string;
+        thumbnail: string;
+        city: string;
+        country: string;
+        country_flag?: string;
+        is_premium?: boolean;
+        is_gold?: boolean;
+        description?: string;
+        phone?: string;
+        services?: string[];
+    };
+    index?: number;
+}
+
+const { listing, index = 0 } = Astro.props;
+const isGold = listing.is_gold;
+const isPremium = listing.is_premium && !listing.is_gold;
+const shortDesc = listing.description ? listing.description.substring(0, 90) + '...' : '';
+---
+
+<article class:list={['venue-card', { 'venue-gold': isGold, 'venue-premium': isPremium }]} style={'--delay: '+index*0.05+'s'}>
+    <!-- Image Container -->
+    <a href={'/'+listing.slug} class="venue-image-link">
+        <div class="venue-image">
+            <img 
+                src={listing.thumbnail} 
+                alt={`${listing.name} - ${listing.is_gold ? 'Gold verified' : listing.is_premium ? 'Silver verified' : 'Quality'} Nuru Massage in Istanbul, Turkey. Click for photos and contact info.`}
+                loading={index < 4 ? 'eager' : 'lazy'}
+                decoding="async"
+            />
+            
+            <!-- Gradient Overlay -->
+            <div class="venue-gradient"></div>
+            
+            <!-- Gold/Premium Ribbon -->
+            {isGold && (
+                <div class="venue-ribbon gold-ribbon">
+                    <span class="ribbon-icon">⭐</span>
+                    <span>GOLD</span>
+                </div>
+            )}
+            {isPremium && (
+                <div class="venue-ribbon premium-ribbon">
+                    <span class="ribbon-icon">✨</span>
+                    <span>SILVER</span>
+                </div>
+            )}
+            
+            <!-- Quick Actions -->
+            <div class="venue-actions">
+                <button class="action-btn" title="View gallery">📸</button>
+            </div>
+            
+            <!-- View Button on Hover -->
+            <div class="venue-cta">
+                <span class="cta-btn">View Details →</span>
+            </div>
+        </div>
+    </a>
+    
+    <!-- Card Content -->
+    <div class="venue-content">
+        <!-- Header -->
+        <div class="venue-header">
+            <a href={'/'+listing.slug} class="venue-title-link">
+                <h3 class="venue-title">{listing.name}</h3>
+            </a>
+            {isGold && <span class="verified-badge" title="Verified Gold Member">✓</span>}
+        </div>
+        
+        <!-- Location -->
+        <div class="venue-location">
+            <span class="loc-icon">📍</span>
+            <span>{listing.city}, {listing.country}</span>
+            {listing.country_flag && (
+                <img src={listing.country_flag} alt="" class="flag-icon" />
+            )}
+        </div>
+        
+        <!-- Description -->
+        {shortDesc && (
+            <p class="venue-desc">{shortDesc}</p>
+        )}
+        
+        <!-- Footer -->
+        <div class="venue-footer">
+            <a href={'/'+listing.slug} class="venue-link">
+                View listing →
+            </a>
+        </div>
+    </div>
+    
+    <!-- Gold Glow Effect -->
+    {isGold && <div class="gold-glow"></div>}
+</article>
+
+<style>
+/* ============================================
+   VENUE CARD - ULTRA PREMIUM DESIGN
+   ============================================ */
+.venue-card {
+    position: relative;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    animation: cardAppear 0.6s ease backwards;
+    animation-delay: var(--delay, 0s);
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.venue-card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.15);
+}
+
+/* Gold Card Special */
+.venue-gold {
+    background: linear-gradient(145deg, #FFFEF5 0%, #FFF9E6 100%);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+}
+
+.venue-gold::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #D4AF37 100%);
+    border-radius: 22px;
+    z-index: -1;
+    animation: goldShimmer 3s linear infinite;
+}
+
+@keyframes goldShimmer {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+.venue-gold:hover {
+    box-shadow: 0 24px 70px rgba(212, 175, 55, 0.35);
+}
+
+.gold-glow {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* Premium Card */
+.venue-premium {
+    border: 2px solid var(--primary);
+}
+
+.venue-premium:hover {
+    box-shadow: 0 24px 60px rgba(233, 30, 99, 0.2);
+}
+
+/* ============================================
+   IMAGE SECTION
+   ============================================ */
+.venue-image-link {
+    display: block;
+    text-decoration: none;
+}
+
+.venue-image {
+    position: relative;
+    aspect-ratio: 16/11;
+    overflow: hidden;
+}
+
+.venue-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.venue-card:hover .venue-image img {
+    transform: scale(1.1);
+}
+
+.venue-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 50%,
+        rgba(0,0,0,0.6) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.venue-card:hover .venue-gradient {
+    opacity: 1;
+}
+
+/* ============================================
+   RIBBONS
+   ============================================ */
+.venue-ribbon {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+.venue-ribbon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.gold-ribbon {
+    background: linear-gradient(135deg, rgba(212,175,55,0.95), rgba(244,208,63,0.95));
+    color: #1a1a1a;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.5);
+    animation: ribbonPulse 2s ease-in-out infinite;
+}
+
+@keyframes ribbonPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+.premium-ribbon {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+}
+
+/* ============================================
+   QUICK ACTIONS
+   ============================================ */
+.venue-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.venue-card:hover .venue-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.action-btn svg {
+    width: 18px;
+    height: 18px;
+    color: #333;
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+    background: var(--primary);
+}
+
+.action-btn:hover svg {
+    color: white;
+}
+
+/* ============================================
+   CTA BUTTON
+   ============================================ */
+.venue-cta {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    z-index: 10;
+}
+
+.venue-card:hover .venue-cta {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: white;
+    color: #1a1a1a;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    transition: all 0.3s ease;
+}
+
+.cta-btn svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.cta-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.05);
+}
+
+.cta-btn:hover svg {
+    transform: translateX(4px);
+}
+
+.venue-gold .cta-btn:hover {
+    background: linear-gradient(135deg, #D4AF37, #F4D03F);
+    color: #1a1a1a;
+}
+
+/* ============================================
+   CONTENT SECTION
+   ============================================ */
+.venue-content {
+    padding: 24px;
+}
+
+.venue-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.venue-title-link {
+    text-decoration: none;
+    flex: 1;
+}
+
+.venue-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    line-height: 1.35;
+    transition: color 0.2s ease;
+}
+
+.venue-title-link:hover .venue-title {
+    color: var(--primary);
+}
+
+.venue-gold .venue-title {
+    color: #8B7355;
+}
+
+.verified-badge {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #D4AF37, #F4D03F);
+    color: #1a1a1a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}
+
+/* ============================================
+   LOCATION
+   ============================================ */
+.venue-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 14px;
+}
+
+.venue-location svg {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.flag-icon {
+    width: 20px;
+    height: 14px;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-left: auto;
+}
+
+/* ============================================
+   DESCRIPTION
+   ============================================ */
+.venue-desc {
+    font-size: 0.9rem;
+    color: #777;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.venue-footer {
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.venue-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.venue-link svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+}
+
+.venue-link:hover {
+    color: var(--secondary);
+    text-decoration: none;
+}
+
+.venue-link:hover svg {
+    transform: translateX(5px);
+}
+
+.venue-gold .venue-link {
+    color: #B8860B;
+}
+
+.venue-gold .venue-link:hover {
+    color: #D4AF37;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .venue-image {
+        aspect-ratio: 4/3;
+    }
+    
+    .venue-content {
+        padding: 20px;
+    }
+    
+    .venue-title {
+        font-size: 1.1rem;
+    }
+    
+    .venue-ribbon {
+        padding: 6px 12px;
+        font-size: 0.65rem;
+    }
+    
+    .venue-cta {
+        display: none;
+    }
+    
+    .venue-actions {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .venue-card {
+        background: #1e1e2e;
+    }
+    
+    .venue-title {
+        color: #fff;
+    }
+    
+    .venue-location,
+    .venue-desc {
+        color: #aaa;
+    }
+    
+    .venue-footer {
+        border-color: #333;
+    }
+    
+    .cta-btn {
+        background: #fff;
+        color: #1a1a1a;
+    }
+}
+</style>

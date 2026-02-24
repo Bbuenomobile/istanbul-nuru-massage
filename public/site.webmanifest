@@ -1,0 +1,16 @@
+{
+    "name": "Istanbul Nuru Massage",
+    "short_name": "Istanbul Nuru Massage \ud83c\udf0d",
+    "description": "Explore Nuru Massage in Istanbul with our directory of 3 verified locations in Place Taksim.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#e91e63",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

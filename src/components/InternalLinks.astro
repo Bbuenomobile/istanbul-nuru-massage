@@ -1,0 +1,368 @@
+---
+export interface Props {
+    city: string;
+    country: string;
+    category: string;
+}
+
+const { city, country, category } = Astro.props;
+const countrySlug = country.toLowerCase().replace(/ /g, '-');
+const citySlug = city.toLowerCase().replace(/ /g, '-');
+
+// Strategic ErotikMaps pages to boost with dofollow links
+const mainCategories = [
+    { url: 'https://erotikmaps.com/erotic-massage', text: 'Erotic Massage Directory', icon: '💆' },
+    { url: 'https://erotikmaps.com/gentlemens-club', text: "Gentlemen's Clubs", icon: '🥂' },
+    { url: 'https://erotikmaps.com/swinger-club', text: 'Swinger Clubs', icon: '💃' },
+    { url: 'https://erotikmaps.com/gfe', text: 'GFE - Girlfriend Experience', icon: '💕' },
+];
+
+// Popular European destinations
+const popularDestinations = [
+    { url: 'https://erotikmaps.com/erotic-massage/germany', text: 'Germany', flag: '🇩🇪' },
+    { url: 'https://erotikmaps.com/erotic-massage/spain', text: 'Spain', flag: '🇪🇸' },
+    { url: 'https://erotikmaps.com/erotic-massage/france', text: 'France', flag: '🇫🇷' },
+    { url: 'https://erotikmaps.com/erotic-massage/czech-republic', text: 'Czech Republic', flag: '🇨🇿' },
+    { url: 'https://erotikmaps.com/erotic-massage/netherlands', text: 'Netherlands', flag: '🇳🇱' },
+    { url: 'https://erotikmaps.com/erotic-massage/poland', text: 'Poland', flag: '🇵🇱' },
+    { url: 'https://erotikmaps.com/erotic-massage/hungary', text: 'Hungary', flag: '🇭🇺' },
+    { url: 'https://erotikmaps.com/erotic-massage/thailand', text: 'Thailand', flag: '🇹🇭' },
+];
+
+// Top cities to promote
+const topCities = [
+    { url: 'https://erotikmaps.com/erotic-massage/germany/berlin', text: 'Berlin' },
+    { url: 'https://erotikmaps.com/erotic-massage/spain/barcelona', text: 'Barcelona' },
+    { url: 'https://erotikmaps.com/erotic-massage/czech-republic/prague', text: 'Prague' },
+    { url: 'https://erotikmaps.com/erotic-massage/netherlands/amsterdam', text: 'Amsterdam' },
+    { url: 'https://erotikmaps.com/erotic-massage/hungary/budapest', text: 'Budapest' },
+    { url: 'https://erotikmaps.com/erotic-massage/thailand/bangkok', text: 'Bangkok' },
+    { url: 'https://erotikmaps.com/erotic-massage/thailand/pattaya', text: 'Pattaya' },
+    { url: 'https://erotikmaps.com/erotic-massage/germany/hamburg', text: 'Hamburg' },
+];
+
+// Massage types / fake categories to promote
+const massageTypes = [
+    { url: 'https://erotikmaps.com/nuru-massage', text: 'Nuru Massage' },
+    { url: 'https://erotikmaps.com/tantric-massage', text: 'Tantric Massage' },
+    { url: 'https://erotikmaps.com/body-to-body-massage', text: 'Body to Body' },
+    { url: 'https://erotikmaps.com/sensual-massage', text: 'Sensual Massage' },
+    { url: 'https://erotikmaps.com/happy-ending-massage', text: 'Happy Ending' },
+    { url: 'https://erotikmaps.com/lingam-massage', text: 'Lingam Massage' },
+];
+---
+
+<section class="internal-links">
+    <div class="container">
+        <h2><span class="heading-icon" aria-hidden="true">🔗</span> Discover More Adult Entertainment</h2>
+        
+        <!-- Main Categories -->
+        <div class="links-section">
+            <h3>Browse by Category</h3>
+            <div class="category-cards">
+                {mainCategories.map((cat) => (
+                    <a href={cat.url} class="category-card" title={cat.text + ' worldwide'}>
+                        <span class="cat-icon">{cat.icon}</span>
+                        <span class="cat-text">{cat.text}</span>
+                        <span class="cat-arrow">→</span>
+                    </a>
+                ))}
+            </div>
+        </div>
+        
+        <!-- Country Links -->
+        <div class="links-section">
+            <h3><span class="heading-icon" aria-hidden="true">🌍</span> Popular Countries</h3>
+            <div class="destination-pills">
+                {popularDestinations.map((dest) => (
+                    <a href={dest.url} class="dest-pill" title={'Erotic massage in ' + dest.text}>
+                        <span class="dest-flag">{dest.flag}</span>
+                        {dest.text}
+                    </a>
+                ))}
+            </div>
+        </div>
+        
+        <!-- City Links -->
+        <div class="links-section">
+            <h3><span class="heading-icon" aria-hidden="true">🏙️</span> Top Cities</h3>
+            <div class="city-tags">
+                {topCities.map((c) => (
+                    <a href={c.url} class="city-tag" title={'Adult massage ' + c.text}>
+                        {c.text}
+                    </a>
+                ))}
+            </div>
+        </div>
+        
+        <!-- Service Types -->
+        <div class="links-section">
+            <h3><span class="heading-icon" aria-hidden="true">💆</span> Popular Service Types</h3>
+            <div class="type-links">
+                {massageTypes.map((type) => (
+                    <a href={type.url} class="type-link" title={type.text + ' near you'}>
+                        {type.text}
+                    </a>
+                ))}
+            </div>
+        </div>
+        
+        <!-- Current Location Context -->
+        <div class="current-context">
+            <p>
+                You're browsing <strong>{category}</strong> venues in <strong>{city}, {country}</strong>.
+                Find more options on <a href={'https://erotikmaps.com/erotic-massage/' + countrySlug} title={category + ' in ' + country}>ErotikMaps {country}</a> 
+                or browse the <a href="https://erotikmaps.com" title="ErotikMaps - Global adult directory">complete worldwide directory</a>.
+            </p>
+        </div>
+        
+        <!-- Rich SEO Content -->
+        <div class="seo-content">
+            <h3>About ErotikMaps</h3>
+            <p>
+                <a href="https://erotikmaps.com" title="ErotikMaps adult entertainment directory">ErotikMaps</a> is the world's leading directory for 
+                <a href="https://erotikmaps.com/erotic-massage" title="Erotic massage directory">erotic massage</a> parlors, 
+                <a href="https://erotikmaps.com/gentlemens-club" title="Gentlemen's clubs worldwide">gentlemen's clubs</a>, 
+                <a href="https://erotikmaps.com/swinger-club" title="Swinger clubs directory">swinger clubs</a>, and
+                <a href="https://erotikmaps.com/gfe" title="GFE Girlfriend Experience">GFE (Girlfriend Experience)</a> services. 
+                Our comprehensive listings cover establishments across Europe, Asia, and the Americas.
+            </p>
+            <p>
+                Whether you're looking for a relaxing <a href="https://erotikmaps.com/tantric-massage" title="Tantric massage venues">tantric massage</a>, 
+                an authentic <a href="https://erotikmaps.com/nuru-massage" title="Nuru massage parlors">nuru massage</a> experience, 
+                or a <a href="https://erotikmaps.com/body-to-body-massage" title="Body to body massage">body-to-body massage</a>, 
+                ErotikMaps helps you find the perfect venue with verified reviews and detailed information.
+            </p>
+        </div>
+    </div>
+</section>
+
+<style>
+    .internal-links {
+        background: linear-gradient(180deg, var(--bg) 0%, #f0f2f5 100%);
+        padding: 70px 0;
+        border-top: 1px solid var(--border);
+    }
+    
+    .internal-links h2 {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 40px;
+    }
+    
+    .links-section {
+        margin-bottom: 40px;
+    }
+    
+    .links-section h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-align: center;
+        color: var(--text);
+    }
+    
+    /* Category Cards */
+    .category-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    @media (max-width: 700px) {
+        .category-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .category-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px 24px;
+        background: white;
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 600;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .cat-icon {
+        font-size: 1.5rem;
+    }
+    
+    .cat-text {
+        flex: 1;
+    }
+    
+    .cat-arrow {
+        color: var(--primary);
+        font-weight: 700;
+        transition: transform 0.3s;
+    }
+    
+    .category-card:hover .cat-arrow {
+        transform: translateX(4px);
+    }
+    
+    /* Destination Pills */
+    .destination-pills {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .dest-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: white;
+        border-radius: 30px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 500;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border);
+    }
+    
+    .dest-pill:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+        border-color: var(--primary);
+    }
+    
+    .dest-flag {
+        font-size: 1.2rem;
+    }
+    
+    /* City Tags */
+    .city-tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .city-tag {
+        padding: 8px 18px;
+        background: var(--card-bg);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--text);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border);
+    }
+    
+    .city-tag:hover {
+        background: var(--text);
+        color: white;
+        text-decoration: none;
+    }
+    
+    /* Type Links */
+    .type-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+    
+    .type-link {
+        padding: 10px 22px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.2);
+    }
+    
+    .type-link:hover {
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(233, 30, 99, 0.3);
+        text-decoration: none;
+    }
+    
+    /* Current Context */
+    .current-context {
+        text-align: center;
+        padding: 25px;
+        background: white;
+        border-radius: 12px;
+        margin: 30px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .current-context p {
+        color: var(--text-light);
+        font-size: 1rem;
+        margin: 0;
+    }
+    
+    .current-context strong {
+        color: var(--text);
+    }
+    
+    .current-context a {
+        color: var(--primary);
+        font-weight: 600;
+    }
+    
+    /* SEO Content */
+    .seo-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 30px;
+    }
+    
+    .seo-content h3 {
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        text-align: left;
+    }
+    
+    .seo-content p {
+        font-size: 0.95rem;
+        color: var(--text-light);
+        line-height: 1.9;
+        margin-bottom: 15px;
+    }
+    
+    .seo-content p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .seo-content a {
+        color: var(--primary);
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+    }
+    
+    .seo-content a:hover {
+        text-decoration-thickness: 2px;
+    }
+</style>

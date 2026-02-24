@@ -1,0 +1,186 @@
+---
+export interface Props {
+    city: string;
+    currentCategory?: string;
+    mainCategory?: string;
+}
+
+const { city, currentCategory, mainCategory = 'erotic-massage' } = Astro.props;
+
+// Fake categories (sub-types) for erotic massage - real SEO categories
+const massageCategories = [
+    { slug: 'nuru-massage', name: 'Nuru Massage', icon: '💆', description: 'Gel-based body massage' },
+    { slug: 'tantric-massage', name: 'Tantric Massage', icon: '🕉️', description: 'Spiritual sensual experience' },
+    { slug: 'body-to-body-massage', name: 'Body to Body', icon: '✨', description: 'Full contact massage' },
+    { slug: 'sensual-massage', name: 'Sensual Massage', icon: '💕', description: 'Intimate relaxation' },
+    { slug: 'happy-ending-massage', name: 'Happy Ending', icon: '😊', description: 'Complete satisfaction' },
+    { slug: 'adult-massage', name: 'Adult Massage', icon: '🔞', description: 'Adults-only services' },
+    { slug: 'nude-massage', name: 'Nude Massage', icon: '👙', description: 'Natural body contact' },
+    { slug: 'tantra-massage', name: 'Tantra Massage', icon: '☯️', description: 'Energy healing touch' },
+    { slug: 'couples-massage', name: 'Couples Massage', icon: '💑', description: 'Shared experience' },
+    { slug: 'sex-massage', name: 'Sex Massage', icon: '🔥', description: 'Intimate pleasure' },
+];
+
+// Fake categories (sub-types) for gentlemen's club - real SEO categories
+const clubCategories = [
+    { slug: 'strip-club', name: 'Strip Club', icon: '💃', description: 'Live striptease shows' },
+    { slug: 'sex-club', name: 'Sex Club', icon: '🔥', description: 'Adult entertainment' },
+    { slug: 'adult-club', name: 'Adult Club', icon: '🔞', description: 'Exclusive nightclub' },
+    { slug: 'topless-bar', name: 'Topless Bar', icon: '🍸', description: 'Topless entertainment' },
+    { slug: 'lap-dance', name: 'Lap Dance', icon: '💋', description: 'Private lap dances' },
+    { slug: 'pole-dance', name: 'Pole Dance', icon: '🎭', description: 'Pole dance shows' },
+    { slug: 'striptease', name: 'Striptease', icon: '✨', description: 'Live performances' },
+    { slug: 'private-dance', name: 'Private Dance', icon: '🎪', description: 'Exclusive dances' },
+    { slug: 'cabaret', name: 'Cabaret', icon: '🎩', description: 'Cabaret shows' },
+    { slug: 'nightclub-adult', name: 'Adult Nightclub', icon: '🌙', description: 'Adults-only venue' },
+];
+
+// Fake categories for swinger clubs
+const swingerCategories = [
+    { slug: 'couples-club', name: 'Couples Club', icon: '💑', description: 'Private club for couples' },
+    { slug: 'lifestyle-club', name: 'Lifestyle Club', icon: '🌟', description: 'Open-minded venue' },
+    { slug: 'private-party-club', name: 'Private Party', icon: '🎭', description: 'Exclusive parties' },
+    { slug: 'adult-sauna-club', name: 'Adult Sauna', icon: '♨️', description: 'Sauna with entertainment' },
+    { slug: 'libertine-club', name: 'Libertine Club', icon: '🔥', description: 'Libertine venue' },
+    { slug: 'fetish-club', name: 'Fetish Club', icon: '⛓️', description: 'Fetish & BDSM' },
+    { slug: 'nudist-club', name: 'Nudist Club', icon: '🏖️', description: 'Naturist venue' },
+    { slug: 'sex-party', name: 'Sex Party Venue', icon: '🎉', description: 'Organized adult events' },
+];
+
+// Fake categories for sugar baby
+const sugarBabyCategories = [
+    { slug: 'sugar-dating', name: 'Sugar Dating', icon: '💕', description: 'Sugar dating arrangements' },
+    { slug: 'sugar-daddy', name: 'Sugar Daddy', icon: '💰', description: 'Find a sugar daddy' },
+    { slug: 'sugar-mommy', name: 'Sugar Mommy', icon: '👩‍💼', description: 'Find a sugar mommy' },
+    { slug: 'luxury-companion', name: 'Luxury Companion', icon: '💎', description: 'High-end companionship' },
+    { slug: 'erotic-massage', name: 'Erotic Massage', icon: '💆', description: 'Professional massage' },
+    { slug: 'gentlemens-club', name: "Gentlemen's Club", icon: '🎩', description: 'Nightlife venues' },
+    { slug: 'swinger-club', name: 'Swinger Club', icon: '🔥', description: 'Adult lifestyle clubs' },
+];
+
+// Fake categories for GFE
+const gfeCategories = [
+    { slug: 'girlfriend-experience', name: 'Girlfriend Experience', icon: '💋', description: 'Authentic GFE encounters' },
+    { slug: 'companionship', name: 'Companionship', icon: '🤝', description: 'Quality companionship' },
+    { slug: 'escort-gfe', name: 'Escort GFE', icon: '🌹', description: 'Escort with GFE service' },
+    { slug: 'luxury-date', name: 'Luxury Date', icon: '🥂', description: 'Upscale dating' },
+    { slug: 'erotic-massage', name: 'Erotic Massage', icon: '💆', description: 'Professional massage' },
+    { slug: 'gentlemens-club', name: "Gentlemen's Club", icon: '🎩', description: 'Nightlife venues' },
+    { slug: 'swinger-club', name: 'Swinger Club', icon: '🔥', description: 'Adult lifestyle clubs' },
+];
+
+// Select categories based on main category
+const categoryMap: Record<string, any[]> = {
+    'erotic-massage': massageCategories,
+    'gentlemens-club': clubCategories,
+    'swinger-club': swingerCategories,
+    'sugar-baby': sugarBabyCategories,
+    'gfe': gfeCategories,
+};
+const titleMap: Record<string, string> = {
+    'erotic-massage': 'Massage Types',
+    'gentlemens-club': 'Club Types',
+    'swinger-club': 'Venue Types',
+    'sugar-baby': 'Sugar Baby Categories',
+    'gfe': 'GFE Categories',
+};
+const linkMap: Record<string, { url: string; text: string }> = {
+    'erotic-massage': { url: 'https://erotikmaps.com/erotic-massage', text: 'erotic massage venues' },
+    'gentlemens-club': { url: 'https://erotikmaps.com/gentlemens-club', text: "gentlemen's clubs" },
+    'swinger-club': { url: 'https://erotikmaps.com/swinger-club', text: 'swinger clubs' },
+    'sugar-baby': { url: 'https://erotikmaps.com/sugar-baby', text: 'sugar baby profiles' },
+    'gfe': { url: 'https://erotikmaps.com/gfe', text: 'GFE companions' },
+};
+const categories = categoryMap[mainCategory] || massageCategories;
+const sectionTitle = titleMap[mainCategory] || 'Venue Types';
+const mainLink = linkMap[mainCategory] || { url: 'https://erotikmaps.com/erotic-massage', text: 'adult venues' };
+---
+
+<section class="category-nav" id="categories">
+    <div class="container">
+        <h2>Browse {sectionTitle} in {city}</h2>
+        <p class="nav-subtitle">Find the perfect experience for you</p>
+        <div class="category-grid">
+            {categories.map((cat) => (
+                <a 
+                    href={`/${cat.slug}`} 
+                    class={`category-card ${currentCategory === cat.slug ? 'active' : ''}`}
+                    title={`${cat.name} in ${city}`}
+                >
+                    <span class="cat-icon">{cat.icon}</span>
+                    <span class="cat-name">{cat.name}</span>
+                    <span class="cat-desc">{cat.description}</span>
+                </a>
+            ))}
+        </div>
+        <p class="seo-link">
+            Looking for more options? Browse all 
+            <a href={mainLink.url} title={`${mainLink.text} worldwide`}>{mainLink.text} worldwide</a> 
+            on ErotikMaps.
+        </p>
+    </div>
+</section>
+
+<style>
+    .category-nav {
+        padding: 50px 0;
+        background: var(--bg);
+    }
+    .category-nav h2 {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .nav-subtitle {
+        text-align: center;
+        color: var(--text-light);
+        margin-bottom: 30px;
+    }
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+    .category-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px 15px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 2px solid transparent;
+    }
+    .category-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: var(--primary);
+    }
+    .category-card.active {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, var(--primary)05, var(--secondary)05);
+    }
+    .cat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    .cat-name {
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 5px;
+    }
+    .cat-desc {
+        font-size: 12px;
+        color: var(--text-light);
+        text-align: center;
+    }
+    .seo-link {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 14px;
+        color: var(--text-light);
+    }
+    .seo-link a {
+        color: var(--primary);
+    }
+</style>

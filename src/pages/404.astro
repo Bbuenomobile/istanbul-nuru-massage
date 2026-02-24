@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base 
+    title="Page Not Found - Istanbul Nuru Massage"
+    description="The page you're looking for doesn't exist."
+>
+    <section class="error-page">
+        <div class="container">
+            <h1>404</h1>
+            <h2>Page Not Found</h2>
+            <p>Sorry, the page you're looking for doesn't exist or has been moved.</p>
+            <div class="error-actions">
+                <a href="/" class="btn-primary">← Back to Homepage</a>
+                <p class="hint">Looking for Nuru Massage in Istanbul? Browse our directory.</p>
+            </div>
+        </div>
+    </section>
+</Base>
+
+<style>
+    .error-page {
+        text-align: center;
+        padding: 100px 20px;
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .error-page h1 {
+        font-size: 8rem;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+    .error-page h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    .error-page p {
+        color: var(--text-light);
+        margin-bottom: 30px;
+    }
+    .error-actions {
+        margin-top: 30px;
+    }
+    .hint {
+        margin-top: 20px;
+        font-size: 14px;
+    }
+</style>

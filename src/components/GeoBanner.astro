@@ -1,0 +1,88 @@
+---
+// GeoBanner component - Fetches and displays geo-targeted banners from ErotikMaps API
+// This runs client-side to leverage Cloudflare geo headers
+---
+
+<div id="geo-banner-container" class="geo-banner-wrapper" style="display: none;">
+    <!-- Banner will be injected here by JavaScript -->
+</div>
+
+<script>
+    // Fetch and display geo-targeted banner
+    async function loadGeoBanner() {
+        try {
+            const container = document.getElementById('geo-banner-container');
+            if (!container) return;
+            
+            const response = await fetch('https://www.erotikmaps.com/api/v1/satellite/geo-banner', {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            
+            if (!data.success || !data.has_banner || !data.data) return;
+            
+            const banner = data.data;
+            let bannerHtml = '';
+            
+            if (banner.type === 'html') {
+                // HTML/iframe banner
+                bannerHtml = banner.html_code;
+            } else if (banner.type === 'image' && banner.image_url) {
+                // Image banner with optional link
+                if (banner.link_url) {
+                    const rel = banner.rel || 'noopener';
+                    const target = banner.open_new_tab ? '_blank' : '_self';
+                    bannerHtml = `
+                        <a href="${banner.link_url}" target="${target}" rel="${rel}" class="geo-banner-link">
+                            <img src="${banner.image_url}" alt="${banner.alt || 'Advertisement'}" loading="lazy" style="max-width: 100%; height: auto;">
+                        </a>
+                    `;
+                } else {
+                    bannerHtml = `<img src="${banner.image_url}" alt="${banner.alt || 'Advertisement'}" loading="lazy" style="max-width: 100%; height: auto;">`;
+                }
+            }
+            
+            if (bannerHtml) {
+                container.innerHTML = bannerHtml;
+                container.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Failed to load geo banner:', error);
+        }
+    }
+    
+    // Load banner when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadGeoBanner);
+    } else {
+        loadGeoBanner();
+    }
+</script>
+
+<style>
+    .geo-banner-wrapper {
+        text-align: center;
+        margin: 30px 0;
+        padding: 0 20px;
+    }
+    
+    .geo-banner-wrapper img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+    
+    .geo-banner-link {
+        display: inline-block;
+        text-decoration: none;
+    }
+    
+    .geo-banner-link:hover img {
+        opacity: 0.95;
+    }
+</style>
